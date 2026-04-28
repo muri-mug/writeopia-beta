@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Writeopia Beta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; background: #0e0f14; font-family: 'Inter', sans-serif; overflow: hidden; }
+  #root { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(124,58,237,0.25); border-radius: 3px; }
+  input, textarea { font-family: 'Inter', sans-serif; }
+  button { font-family: 'Inter', sans-serif; }
+
+  @keyframes fadeUp    { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeIn    { from { opacity:0; } to { opacity:1; } }
+  @keyframes slideR    { from { opacity:0; transform:translateX(32px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes slideL    { from { opacity:0; transform:translateX(-32px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes popIn     { from { opacity:0; transform:scale(0.94) translateY(-6px); } to { opacity:1; transform:scale(1) translateY(0); } }
+  @keyframes spin      { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+  @keyframes pulse     { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+  @keyframes orbFloat  { 0%,100% { transform:translateY(0px) translateX(0px); } 33% { transform:translateY(-18px) translateX(8px); } 66% { transform:translateY(10px) translateX(-6px); } }
+  @keyframes slideInSidebar { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes cardIn    { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes slidePanel { from { opacity:0; transform:translateX(100%); } to { opacity:1; transform:translateX(0); } }
+  .mention { color: #7c3aed; background: #f3f0ff; border-radius: 3px; padding: 0 2px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+
+const { useState, useRef, useEffect, useCallback } = React;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// THEME
+// ─────────────────────────────────────────────────────────────────────────────
+const LIGHT = {
+  bg: "#faf9fd",
+  surface: "#ffffff",
+  surfaceAlt: "#f5f3fb",
+  border: "#ede9f8",
+  text: "#111827",
+  textMid: "#4b5563",
+  textMuted: "#9ca3af",
+  accent: "#7c3aed",
+  accentBg: "#f3f0ff",
+  accentBorder: "#e9d5ff",
+  cardBg: "#ffffff",
+  cardBorder: "#f0edf8",
+  sidebarBg: "#ffffff",
+  inputBg: "#ffffff"
+};
+const DARK = {
+  bg: "#111318",
+  surface: "#1c1e26",
+  surfaceAlt: "#21232e",
+  border: "#2a2d3e",
+  text: "#f1f0f5",
+  textMid: "#a0a3b8",
+  textMuted: "#5c6080",
+  accent: "#9b6dff",
+  accentBg: "#1e1438",
+  accentBorder: "#3d2580",
+  cardBg: "#252836",
+  cardBorder: "#2a2d3e",
+  sidebarBg: "#1c1e26",
+  inputBg: "#1c1e26"
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ICONS
+// ─────────────────────────────────────────────────────────────────────────────
+const Icon = ({ d, size = 18, stroke = 1.6, color = "currentColor", fill = "none" }) =>
+<svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round">
+    {Array.isArray(d) ? d.map((p, i) => <path key={i} d={p} />) : <path d={d} />}
+  </svg>;
+
+const Ic = {
+  home: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10",
+  heart: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z",
+  doc: ["M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z", "M14 2v6h6", "M16 13H8", "M16 17H8", "M10 9H8"],
+  folder: "M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z",
+  gear: ["M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z", "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"],
+  help: ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3", "M12 17h.01"],
+  logout: ["M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4", "M16 17l5-5-5-5", "M21 12H9"],
+  bell: ["M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9", "M13.73 21a2 2 0 0 1-3.46 0"],
+  search: ["M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z", "M21 21l-4.35-4.35"],
+  mic: ["M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z", "M19 10v2a7 7 0 0 1-14 0v-2", "M12 19v4", "M8 23h8"],
+  chevD: "M6 9l6 6 6-6",
+  chevR: "M9 18l6-6-6-6",
+  chevL: "M15 18l-6-6 6-6",
+  more: ["M12 5h.01", "M12 12h.01", "M12 19h.01"],
+  plus: "M12 5v14 M5 12h14",
+  x: "M18 6L6 18 M6 6l12 12",
+  check: "M20 6L9 17l-5-5",
+  wifi: ["M5 12.55a11 11 0 0 1 14.08 0", "M1.42 9a16 16 0 0 1 21.16 0", "M8.53 16.11a6 6 0 0 1 6.95 0", "M12 20h.01"],
+  cpu: ["M9 3H5a2 2 0 0 0-2 2v4m6-6h6m-6 0v18m6-18h4a2 2 0 0 1 2 2v4m-6-6v18m0 0H9m6 0h4a2 2 0 0 0 2-2v-4M3 9v6m0 0v4a2 2 0 0 0 2 2h4M3 15h18M21 9v6"],
+  user: ["M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2", "M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"],
+  users: ["M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2", "M23 21v-2a4 4 0 0 1 0 7.75", "M16 3.13a4 4 0 0 1 0 7.75"],
+  mail: ["M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z", "M22 6l-10 7L2 6"],
+  zap: "M13 2L3 14h9l-1 8 10-12h-9l1-8z",
+  lock: ["M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z", "M7 11V7a5 5 0 0 1 10 0v4"],
+  eye: ["M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z", "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"],
+  moon: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z",
+  sun: ["M12 1v2", "M12 21v2", "M4.22 4.22l1.42 1.42", "M18.36 18.36l1.42 1.42", "M1 12h2", "M21 12h2", "M4.22 19.78l1.42-1.42", "M18.36 5.64l1.42-1.42", "M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"],
+  grid: ["M3 3h7v7H3z", "M14 3h7v7h-7z", "M3 14h7v7H3z", "M14 14h7v7h-7z"],
+  list: ["M8 6h13", "M8 12h13", "M8 18h13", "M3 6h.01", "M3 12h.01", "M3 18h.01"],
+  layout: ["M3 3h18v18H3z", "M3 9h18", "M9 21V9"],
+  sliders: ["M4 21v-7", "M4 10V3", "M12 21v-9", "M12 8V3", "M20 21v-5", "M20 12V3", "M1 14h6", "M9 8h6", "M17 16h6"],
+  arrowR: "M5 12h14 M12 5l7 7-7 7",
+  arrowL: "M19 12H5 M12 19l-7-7 7-7"
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHARED PRIMITIVES
+// ─────────────────────────────────────────────────────────────────────────────
+const AvatarStack = ({ count = 2 }) => {
+  const cs = ["#7c3aed", "#a855f7", "#ec4899", "#3b82f6"];
+  return (
+    <div style={{ display: "flex", alignItems: "center" }}>
+      {Array.from({ length: Math.min(count, 3) }).map((_, i) =>
+      <div key={i} style={{ width: 22, height: 22, borderRadius: "50%", background: cs[i % cs.length], border: "2px solid white", marginLeft: i > 0 ? -7 : 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, color: "white", fontWeight: 700, zIndex: 3 - i, position: "relative" }}>
+          {String.fromCharCode(65 + i)}
+        </div>
+      )}
+    </div>);
+
+};
+
+const Badge = ({ label, color = "#7c3aed", bg = "#f3f0ff", border = "#e9d5ff" }) =>
+<span style={{ background: bg, color, fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20, border: `1px solid ${border}`, whiteSpace: "nowrap" }}>{label}</span>;
+
+
+const Spinner = ({ size = 18, color = "#7c3aed" }) =>
+<div style={{ width: size, height: size, border: `2px solid rgba(124,58,237,0.2)`, borderTop: `2px solid ${color}`, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />;
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ONBOARDING
+// ─────────────────────────────────────────────────────────────────────────────
+const ROLES = ["Developer", "Writer", "Researcher", "Legal", "Compliance", "Security", "Product Manager", "Other"];
+
+// Step 1: Welcome
+const StepWelcome = ({ onNext }) =>
+<div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 28, textAlign: "center", animation: "fadeUp 0.5s ease both" }}>
+    {/* Logo orbs */}
+    <div style={{ position: "relative", width: 72, height: 72 }}>
+      <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "linear-gradient(135deg,#7c3aed,#a855f7)", opacity: 0.15, animation: "orbFloat 6s ease-in-out infinite" }} />
+      <div style={{ position: "absolute", inset: 6, borderRadius: "50%", background: "linear-gradient(135deg,#7c3aed,#c084fc)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 32px rgba(124,58,237,0.4)" }}>
+        <span style={{ fontSize: 28, color: "white", fontWeight: 800, letterSpacing: -1 }}>W</span>
+      </div>
+    </div>
+    <div>
+      <div style={{ fontSize: 32, fontWeight: 800, color: "#111827", letterSpacing: "-0.03em", marginBottom: 10 }}>
+        Welcome to <span style={{ color: "#7c3aed" }}>Writeopia</span>
+      </div>
+      <div style={{ fontSize: 15, color: "#6b7280", maxWidth: 380, lineHeight: 1.65, fontWeight: 400 }}>
+        Your team's AI-powered workspace — fully private, running entirely on your local models.
+        No data leaves your machine.
+      </div>
+    </div>
+    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+      {[{ icon: Ic.lock, label: "100% Private" }, { icon: Ic.cpu, label: "Local AI" }, { icon: Ic.zap, label: "Fast & Offline" }].map((f) =>
+    <div key={f.label} style={{ display: "flex", alignItems: "center", gap: 6, background: "#f5f3ff", border: "1px solid #e9d5ff", borderRadius: 20, padding: "6px 14px" }}>
+          <Icon d={f.icon} size={13} color="#7c3aed" />
+          <span style={{ fontSize: 12, fontWeight: 600, color: "#7c3aed" }}>{f.label}</span>
+        </div>
+    )}
+    </div>
+    <button onClick={onNext} style={{ background: "#7c3aed", color: "white", border: "none", borderRadius: 12, padding: "14px 40px", fontSize: 15, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 20px rgba(124,58,237,0.35)", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 8 }}
+  onMouseEnter={(e) => {e.currentTarget.style.background = "#6d28d9";e.currentTarget.style.transform = "translateY(-1px)";e.currentTarget.style.boxShadow = "0 6px 24px rgba(124,58,237,0.45)";}}
+  onMouseLeave={(e) => {e.currentTarget.style.background = "#7c3aed";e.currentTarget.style.transform = "none";e.currentTarget.style.boxShadow = "0 4px 20px rgba(124,58,237,0.35)";}}>
+      Get started <Icon d={Ic.arrowR} size={16} color="white" />
+    </button>
+    <div style={{ fontSize: 12, color: "#9ca3af" }}>No credit card required · Free during beta</div>
+  </div>;
+
+
+// Step 2: Profile
+const StepProfile = ({ data, onChange }) => {
+  const avatarColors = ["#7c3aed", "#a855f7", "#ec4899", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#06b6d4"];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeUp 0.4s ease both" }}>
+      <div>
+        <div style={{ fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: "-0.02em", marginBottom: 6 }}>Tell us about yourself</div>
+        <div style={{ fontSize: 14, color: "#6b7280" }}>Personalise your Writeopia experience</div>
+      </div>
+      {/* Avatar picker */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", textTransform: "uppercase", letterSpacing: "0.06em" }}>Avatar colour</label>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {avatarColors.map((c) =>
+          <div key={c} onClick={() => onChange({ ...data, avatarColor: c })} style={{ width: 34, height: 34, borderRadius: "50%", background: c, cursor: "pointer", border: data.avatarColor === c ? "3px solid #111827" : "3px solid transparent", transition: "border 0.15s, transform 0.15s", transform: data.avatarColor === c ? "scale(1.15)" : "scale(1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {data.avatarColor === c && <Icon d={Ic.check} size={13} color="white" stroke={3} />}
+            </div>
+          )}
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 12 }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", textTransform: "uppercase", letterSpacing: "0.06em" }}>First name</label>
+          <input value={data.firstName || ""} onChange={(e) => onChange({ ...data, firstName: e.target.value })} placeholder="Murilo" style={{ border: "1.5px solid #e5e7eb", borderRadius: 9, padding: "10px 12px", fontSize: 14, outline: "none", color: "#111" }} onFocus={(e) => e.target.style.borderColor = "#7c3aed"} onBlur={(e) => e.target.style.borderColor = "#e5e7eb"} />
+        </div>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", textTransform: "uppercase", letterSpacing: "0.06em" }}>Last name</label>
+          <input value={data.lastName || ""} onChange={(e) => onChange({ ...data, lastName: e.target.value })} placeholder="Muniz" style={{ border: "1.5px solid #e5e7eb", borderRadius: 9, padding: "10px 12px", fontSize: 14, outline: "none", color: "#111" }} onFocus={(e) => e.target.style.borderColor = "#7c3aed"} onBlur={(e) => e.target.style.borderColor = "#e5e7eb"} />
+        </div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", textTransform: "uppercase", letterSpacing: "0.06em" }}>Your role</label>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {ROLES.map((r) =>
+          <button key={r} onClick={() => onChange({ ...data, role: r })} style={{ padding: "7px 14px", borderRadius: 20, fontSize: 13, fontWeight: 500, border: data.role === r ? "1.5px solid #7c3aed" : "1.5px solid #e5e7eb", background: data.role === r ? "#f3f0ff" : "white", color: data.role === r ? "#7c3aed" : "#374151", cursor: "pointer", transition: "all 0.15s" }}>{r}</button>
+          )}
+        </div>
+      </div>
+    </div>);
+
+};
+
+// Step 3: Workspace
+const StepWorkspace = ({ data, onChange }) => {
+  const types = [{ id: "personal", label: "Personal", desc: "Just for you" }, { id: "team", label: "Team", desc: "Collaborate with others" }];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeUp 0.4s ease both" }}>
+      <div>
+        <div style={{ fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: "-0.02em", marginBottom: 6 }}>Create your first workspace</div>
+        <div style={{ fontSize: 14, color: "#6b7280" }}>Workspaces organise your documents and team</div>
+      </div>
+      <div style={{ display: "flex", gap: 10 }}>
+        {types.map((t) =>
+        <div key={t.id} onClick={() => onChange({ ...data, wsType: t.id })} style={{ flex: 1, border: data.wsType === t.id ? "2px solid #7c3aed" : "2px solid #e5e7eb", borderRadius: 12, padding: "14px 16px", cursor: "pointer", background: data.wsType === t.id ? "#f3f0ff" : "white", transition: "all 0.15s" }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: data.wsType === t.id ? "#7c3aed" : "#111827", marginBottom: 3 }}>{t.label}</div>
+            <div style={{ fontSize: 12, color: "#6b7280" }}>{t.desc}</div>
+          </div>
+        )}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", textTransform: "uppercase", letterSpacing: "0.06em" }}>Workspace name</label>
+        <input value={data.wsName || ""} onChange={(e) => onChange({ ...data, wsName: e.target.value })} placeholder={data.wsType === "team" ? "Alpha Product v.0" : "Personal Notes"} style={{ border: "1.5px solid #e5e7eb", borderRadius: 9, padding: "10px 12px", fontSize: 14, outline: "none", color: "#111" }} onFocus={(e) => e.target.style.borderColor = "#7c3aed"} onBlur={(e) => e.target.style.borderColor = "#e5e7eb"} />
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", textTransform: "uppercase", letterSpacing: "0.06em" }}>Description <span style={{ textTransform: "none", fontWeight: 400, color: "#9ca3af" }}>(optional)</span></label>
+        <textarea value={data.wsDesc || ""} onChange={(e) => onChange({ ...data, wsDesc: e.target.value })} placeholder="What's this workspace for?" rows={2} style={{ border: "1.5px solid #e5e7eb", borderRadius: 9, padding: "10px 12px", fontSize: 14, outline: "none", color: "#111", resize: "none", fontFamily: "inherit" }} onFocus={(e) => e.target.style.borderColor = "#7c3aed"} onBlur={(e) => e.target.style.borderColor = "#e5e7eb"} />
+      </div>
+    </div>);
+
+};
+
+// Step 4: Invite Team
+const StepInvite = ({ data, onChange }) => {
+  const addEmail = () => onChange({ ...data, invites: [...(data.invites || [""]), ""] });
+  const setEmail = (i, v) => {const arr = [...(data.invites || [])];arr[i] = v;onChange({ ...data, invites: arr });};
+  const removeEmail = (i) => {const arr = (data.invites || []).filter((_, j) => j !== i);onChange({ ...data, invites: arr });};
+  const invites = data.invites || [""];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeUp 0.4s ease both" }}>
+      <div>
+        <div style={{ fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: "-0.02em", marginBottom: 6 }}>Invite your team</div>
+        <div style={{ fontSize: 14, color: "#6b7280" }}>Add teammates to collaborate in your workspace</div>
+      </div>
+      <div style={{ background: "#f5f3ff", border: "1px solid #e9d5ff", borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+        <Icon d={Ic.lock} size={15} color="#7c3aed" />
+        <span style={{ fontSize: 13, color: "#7c3aed", fontWeight: 500 }}>All content stays on your local server — no external sharing</span>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {invites.map((email, i) =>
+        <div key={i} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, border: "1.5px solid #e5e7eb", borderRadius: 9, padding: "8px 12px", background: "white" }} onFocus={() => {}}>
+              <Icon d={Ic.mail} size={15} color="#9ca3af" />
+              <input value={email} onChange={(e) => setEmail(i, e.target.value)} placeholder={`teammate@company.com`} style={{ border: "none", outline: "none", fontSize: 13, color: "#111", flex: 1, background: "transparent" }} />
+            </div>
+            {invites.length > 1 && <div onClick={() => removeEmail(i)} style={{ cursor: "pointer", color: "#9ca3af", padding: 4 }}><Icon d={Ic.x} size={16} /></div>}
+          </div>
+        )}
+        {invites.length < 4 &&
+        <button onClick={addEmail} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "1.5px dashed #d1d5db", borderRadius: 9, padding: "8px 14px", fontSize: 13, color: "#7c3aed", fontWeight: 600, cursor: "pointer", width: "fit-content", transition: "border-color 0.15s" }}
+        onMouseEnter={(e) => e.currentTarget.style.borderColor = "#7c3aed"}
+        onMouseLeave={(e) => e.currentTarget.style.borderColor = "#d1d5db"}>
+            <Icon d={Ic.plus} size={14} color="#7c3aed" /> Add another
+          </button>
+        }
+      </div>
+    </div>);
+
+};
+
+// Step 5: AI Setup
+const OLLAMA_MODELS = ["llama3.2:3b", "llama3.1:8b", "mistral:7b", "qwen2.5:7b", "gemma3:4b", "phi4-mini:3.8b"];
+const StepAI = ({ data, onChange }) => {
+  const [detecting, setDetecting] = useState(false);
+  const [detected, setDetected] = useState(null); // null | true | false
+  const [pullingModel, setPullingModel] = useState(false);
+
+  const autoDetect = () => {
+    setDetecting(true);
+    setDetected(null);
+    setTimeout(() => {
+      setDetecting(false);
+      setDetected(true);
+      onChange({ ...data, ollamaUrl: "http://localhost:11434", connected: true });
+    }, 2200);
+  };
+
+  const pullModel = () => {
+    setPullingModel(true);
+    setTimeout(() => {
+      setPullingModel(false);
+      onChange({ ...data, modelPulled: true });
+    }, 2500);
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20, animation: "fadeUp 0.4s ease both" }}>
+      <div>
+        <div style={{ fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: "-0.02em", marginBottom: 6 }}>Connect your local AI</div>
+        <div style={{ fontSize: 14, color: "#6b7280" }}>Writeopia runs on Ollama — 100% local, zero telemetry</div>
+      </div>
+      {/* Install prompt */}
+      {!data.connected &&
+      <div style={{ background: "#fafafa", border: "1.5px solid #e5e7eb", borderRadius: 12, padding: "14px 16px" }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ width: 20, height: 20, borderRadius: 6, background: "#111", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><span style={{ color: "white", fontSize: 10, fontWeight: 800 }}>1</span></div>
+            Install Ollama
+          </div>
+          <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 8 }}>Download from <span style={{ color: "#7c3aed", fontWeight: 600 }}>ollama.com</span> and run it in the background</div>
+          <div style={{ background: "#111827", borderRadius: 7, padding: "8px 12px", fontFamily: "monospace", fontSize: 12, color: "#a5f3fc" }}>
+            $ brew install ollama &amp;&amp; ollama serve
+          </div>
+        </div>
+      }
+      {/* Connection */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+          <div style={{ width: 20, height: 20, borderRadius: 6, background: "#111", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><span style={{ color: "white", fontSize: 10, fontWeight: 800 }}>{data.connected ? <Icon d={Ic.check} size={11} color="white" stroke={2.5} /> : "2"}</span></div>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Connect to Ollama</span>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <input value={data.ollamaUrl || "http://localhost:11434"} onChange={(e) => onChange({ ...data, ollamaUrl: e.target.value })} style={{ flex: 1, border: detected === true ? "1.5px solid #10b981" : detected === false ? "1.5px solid #ef4444" : "1.5px solid #e5e7eb", borderRadius: 9, padding: "9px 12px", fontSize: 13, outline: "none", color: "#111", fontFamily: "monospace" }} />
+          <button onClick={autoDetect} disabled={detecting || data.connected} style={{ padding: "9px 16px", borderRadius: 9, border: "none", background: data.connected ? "#10b981" : detecting ? "#e5e7eb" : "#7c3aed", color: "white", fontSize: 13, fontWeight: 600, cursor: detecting || data.connected ? "default" : "pointer", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap", transition: "background 0.2s" }}>
+            {detecting ? <><Spinner size={14} color="white" /><span>Detecting…</span></> : data.connected ? <><Icon d={Ic.check} size={14} color="white" /><span>Connected</span></> : "Auto-detect"}
+          </button>
+        </div>
+        {detected === true && !data.connected && <div style={{ fontSize: 12, color: "#10b981", display: "flex", alignItems: "center", gap: 5 }}><Icon d={Ic.check} size={12} color="#10b981" />Ollama found at localhost:11434</div>}
+        {detected === false && <div style={{ fontSize: 12, color: "#ef4444" }}>Could not connect. Make sure Ollama is running.</div>}
+      </div>
+      {/* Model selection */}
+      {data.connected &&
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, animation: "fadeUp 0.3s ease" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+            <div style={{ width: 20, height: 20, borderRadius: 6, background: "#111", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><span style={{ color: "white", fontSize: 10, fontWeight: 800 }}>3</span></div>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Choose default model</span>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {OLLAMA_MODELS.map((m) =>
+          <button key={m} onClick={() => onChange({ ...data, model: m })} style={{ padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 500, border: data.model === m ? "1.5px solid #7c3aed" : "1.5px solid #e5e7eb", background: data.model === m ? "#f3f0ff" : "white", color: data.model === m ? "#7c3aed" : "#374151", cursor: "pointer", fontFamily: "monospace", transition: "all 0.15s" }}>{m}</button>
+          )}
+          </div>
+          {data.model && !data.modelPulled &&
+        <button onClick={pullModel} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "1.5px solid #e5e7eb", borderRadius: 9, padding: "9px 14px", fontSize: 13, color: "#374151", fontWeight: 600, cursor: "pointer", transition: "all 0.15s", width: "fit-content" }}
+        onMouseEnter={(e) => e.currentTarget.style.borderColor = "#7c3aed"}
+        onMouseLeave={(e) => e.currentTarget.style.borderColor = "#e5e7eb"}>
+              {pullingModel ? <><Spinner size={14} /><span style={{ animation: "pulse 1s infinite" }}>Pulling {data.model}…</span></> : <><Icon d={Ic.zap} size={14} color="#7c3aed" /><span>Pull <strong>{data.model}</strong> to device</span></>}
+            </button>
+        }
+          {data.modelPulled &&
+        <div style={{ fontSize: 13, color: "#10b981", display: "flex", alignItems: "center", gap: 6, animation: "fadeUp 0.3s ease" }}><Icon d={Ic.check} size={14} color="#10b981" />Model ready — you're all set!</div>
+        }
+        </div>
+      }
+    </div>);
+
+};
+
+// Onboarding container
+const STEPS = ["Welcome", "Profile", "Workspace", "Invite", "AI Setup"];
+const Onboarding = ({ onComplete }) => {
+  const [step, setStep] = useState(0);
+  const [dir, setDir] = useState(1);
+  const [profile, setProfile] = useState({ avatarColor: "#7c3aed", firstName: "Murilo", lastName: "Muniz", role: "Developer" });
+  const [workspace, setWorkspace] = useState({ wsType: "team", wsName: "Alpha Product v.0" });
+  const [invite, setInvite] = useState({ invites: [""] });
+  const [ai, setAi] = useState({ ollamaUrl: "http://localhost:11434" });
+
+  const next = () => {if (step < STEPS.length - 1) {setDir(1);setStep((s) => s + 1);} else {onComplete({ profile, workspace, invite, ai });}};
+  const prev = () => {if (step > 0) {setDir(-1);setStep((s) => s - 1);}};
+
+  const canNext = () => {
+    if (step === 1) return (profile.firstName || "").trim() && (profile.role || "");
+    if (step === 2) return (workspace.wsName || "").trim();
+    return true;
+  };
+
+  const stepContent = [
+  <StepWelcome onNext={next} />,
+  <StepProfile data={profile} onChange={setProfile} />,
+  <StepWorkspace data={workspace} onChange={setWorkspace} />,
+  <StepInvite data={invite} onChange={setInvite} />,
+  <StepAI data={ai} onChange={setAi} />];
+
+
+  return (
+    <div style={{ width: "min(520px,92vw)", display: "flex", flexDirection: "column", gap: 0 }}>
+      {/* Card */}
+      <div style={{ background: "white", borderRadius: 20, padding: "36px 36px 28px", boxShadow: "0 20px 60px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06)", minHeight: 440, display: "flex", flexDirection: "column" }}>
+        {/* Step indicator (skip on welcome) */}
+        {step > 0 &&
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 24 }}>
+            {STEPS.slice(1).map((_, i) =>
+          <div key={i} style={{ height: 3, borderRadius: 2, flex: 1, background: i < step ? "#7c3aed" : i === step - 1 ? "#7c3aed" : "#e5e7eb", transition: "background 0.3s" }} />
+          )}
+            <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600, whiteSpace: "nowrap", marginLeft: 6 }}>{step} / {STEPS.length - 1}</span>
+          </div>
+        }
+        <div key={step} style={{ flex: 1, animation: `${dir > 0 ? "slideR" : "slideL"} 0.3s ease both` }}>
+          {stepContent[step]}
+        </div>
+        {/* Nav buttons (skip on welcome which has its own CTA) */}
+        {step > 0 &&
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24, paddingTop: 20, borderTop: "1px solid #f3f4f6" }}>
+            <button onClick={prev} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "1.5px solid #e5e7eb", borderRadius: 9, padding: "9px 16px", fontSize: 13, fontWeight: 600, color: "#374151", cursor: "pointer", transition: "all 0.15s" }}
+          onMouseEnter={(e) => e.currentTarget.style.borderColor = "#7c3aed"}
+          onMouseLeave={(e) => e.currentTarget.style.borderColor = "#e5e7eb"}>
+              <Icon d={Ic.arrowL} size={14} /> Back
+            </button>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {step === 3 &&
+            <button onClick={next} style={{ background: "none", border: "none", fontSize: 13, color: "#9ca3af", cursor: "pointer", fontWeight: 500, padding: "9px 12px" }}>Skip</button>
+            }
+              <button onClick={next} disabled={!canNext()} style={{ display: "flex", alignItems: "center", gap: 6, background: canNext() ? "#7c3aed" : "#e5e7eb", color: canNext() ? "white" : "#9ca3af", border: "none", borderRadius: 9, padding: "9px 20px", fontSize: 13, fontWeight: 700, cursor: canNext() ? "pointer" : "default", transition: "all 0.2s", boxShadow: canNext() ? "0 2px 10px rgba(124,58,237,0.3)" : "none" }}
+            onMouseEnter={(e) => {if (canNext()) {e.currentTarget.style.background = "#6d28d9";e.currentTarget.style.transform = "translateY(-1px)";}}}
+            onMouseLeave={(e) => {if (canNext()) {e.currentTarget.style.background = "#7c3aed";e.currentTarget.style.transform = "none";}}}>
+                {step === STEPS.length - 1 ? "Enter Writeopia" : "Continue"} <Icon d={Ic.arrowR} size={14} color={canNext() ? "white" : "#9ca3af"} />
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>);
+
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HOME — CARDS
+// ─────────────────────────────────────────────────────────────────────────────
+const CARD_DATA = [
+{ id: 1, title: "PRD to launch the new productivity SaaS Platform", tags: ["Product", "Strategy"], progress: 86, bg: "#7c3aed", date: "Nov 5, 2025", avatars: 2, fav: false },
+{ id: 2, title: "PRD to launch the new productivity SaaS Platform", tags: ["Design", "UX"], progress: null, bg: "img-notes", date: "Nov 5, 2025", avatars: 2, fav: false },
+{ id: 3, title: "Welcome Guide", tags: [], progress: null, bg: "img-city", date: "Nov 5, 2025", avatars: 0, fav: false, isBanner: true },
+{ id: 4, title: "PRD to launch the new productivity SaaS Platform", tags: ["Tag Name", "Tag Name", "Tag Name"], progress: null, bg: "img-rocket", date: "Nov 5, 2025", avatars: 2, fav: true },
+{ id: 5, title: "PRD to launch the new productivity SaaS Platform", tags: ["Tag Name", "Tag Name", "Tag Name"], progress: null, bg: "img-postits", date: "Nov 5, 2025", avatars: 2, fav: false },
+{ id: 6, title: "API Documentation v2.4", tags: ["Dev", "Docs"], progress: 86, bg: "#a855f7", date: "Nov 5, 2025", avatars: 2, fav: false },
+{ id: 7, title: "Finance Q4 Review", tags: ["Finance", "Legal"], progress: null, bg: "img-city2", date: "Nov 5, 2025", avatars: 2, fav: false },
+{ id: 8, title: "GTM Strategy 2025", tags: ["Strategy", "Marketing"], progress: 86, bg: "#6d28d9", date: "Nov 5, 2025", avatars: 2, fav: false },
+{ id: 9, title: "Security Audit Checklist", tags: ["Security", "Compliance"], progress: 72, bg: "#7c3aed", date: "Nov 5, 2025", avatars: 3, fav: false },
+{ id: 10, title: "Research: Local LLM Performance", tags: ["Research", "AI"], progress: null, bg: "img-space", date: "Nov 5, 2025", avatars: 2, fav: true },
+{ id: 11, title: "Legal Contract Templates", tags: ["Legal", "Compliance"], progress: null, bg: "#4c1d95", date: "Nov 5, 2025", avatars: 1, fav: false },
+{ id: 12, title: "Onboarding Guide v3", tags: ["Product"], progress: 45, bg: "img-lego", date: "Nov 5, 2025", avatars: 2, fav: false }];
+
+
+const IMG_CONFIGS = {
+  "img-notes": { c1: "#d97706", c2: "#f59e0b", label: "sticky notes photo" },
+  "img-city": { c1: "#1e1b4b", c2: "#312e81", label: "futuristic city" },
+  "img-rocket": { c1: "#111827", c2: "#1f2937", label: "rocket launch photo" },
+  "img-postits": { c1: "#c2410c", c2: "#ea580c", label: "colorful postits" },
+  "img-city2": { c1: "#065f46", c2: "#047857", label: "construction site" },
+  "img-space": { c1: "#0f172a", c2: "#1e293b", label: "space nebula" },
+  "img-lego": { c1: "#b45309", c2: "#d97706", label: "lego city photo" }
+};
+
+const ImgPlaceholder = ({ type }) => {
+  const cfg = IMG_CONFIGS[type] || { c1: "#374151", c2: "#4b5563", label: "photo" };
+  const id = `g${type}`;
+  return (
+    <svg width="100%" height="100%" viewBox="0 0 300 160" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id={id} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={cfg.c1} /><stop offset="100%" stopColor={cfg.c2} />
+        </linearGradient>
+        <pattern id={`p${type}`} patternUnits="userSpaceOnUse" width="14" height="14" patternTransform="rotate(45)">
+          <rect width="14" height="14" fill={`url(#${id})`} />
+          <line x1="0" y1="0" x2="0" y2="14" stroke="rgba(255,255,255,0.04)" strokeWidth="7" />
+        </pattern>
+      </defs>
+      <rect width="300" height="160" fill={`url(#p${type})`} />
+      <text x="150" y="86" fontFamily="monospace" fontSize="9" fill="rgba(255,255,255,0.28)" textAnchor="middle">{cfg.label}</text>
+    </svg>);
+
+};
+
+const DocCard = ({ card, onFavToggle, theme, density, layout }) => {
+  const [hov, setHov] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const isImg = card.bg.startsWith("img-");
+  const T = theme;
+
+  const coverH = layout === "list" ? 0 : density === "compact" ? 100 : density === "spacious" ? 160 : 130;
+  const pad = density === "compact" ? "10px 12px 12px" : density === "spacious" ? "16px 18px 18px" : "12px 14px 14px";
+  const titleSize = density === "compact" ? 12 : density === "spacious" ? 15 : 13;
+
+  if (layout === "list") {
+    return (
+      <div onMouseEnter={() => setHov(true)} onMouseLeave={() => {setHov(false);setMenu(false);}} style={{ background: T.cardBg, border: `1px solid ${T.cardBorder}`, borderRadius: 10, padding: "12px 16px", display: "flex", alignItems: "center", gap: 14, cursor: "pointer", transition: "all 0.15s", boxShadow: hov ? `0 4px 16px rgba(124,58,237,0.1)` : "none", transform: hov ? "translateY(-1px)" : "none", animation: "cardIn 0.3s ease both" }}>
+        <div style={{ width: 36, height: 36, borderRadius: 8, background: isImg ? "#e9d5ff" : card.bg, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+          {isImg ? <Icon d={Ic.doc} size={16} color="#7c3aed" /> : <Icon d={Ic.doc} size={16} color="white" />}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: T.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{card.title}</div>
+          <div style={{ fontSize: 11, color: T.textMuted, marginTop: 2 }}>Updated {card.date}</div>
+        </div>
+        <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+          {card.tags.slice(0, 2).map((t, i) => <Badge key={i} label={t} color={T.accent} bg={T.accentBg} border={T.accentBorder} />)}
+        </div>
+        {card.progress && <span style={{ background: T.accent, color: "white", fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 12, flexShrink: 0 }}>{card.progress}%</span>}
+        <div onClick={(e) => {e.stopPropagation();onFavToggle(card.id);}} style={{ cursor: "pointer", flexShrink: 0 }}>
+          <Icon d={Ic.heart} size={16} color={card.fav ? "#ef4444" : T.textMuted} fill={card.fav ? "#ef4444" : "none"} />
+        </div>
+      </div>);
+
+  }
+
+  return (
+    <div onMouseEnter={() => setHov(true)} onMouseLeave={() => {setHov(false);setMenu(false);}} style={{ background: T.cardBg, borderRadius: 14, overflow: "hidden", cursor: "pointer", boxShadow: hov ? `0 8px 28px rgba(124,58,237,0.13)` : `0 1px 4px rgba(0,0,0,${T === DARK ? 0.3 : 0.06})`, transition: "box-shadow 0.2s, transform 0.2s", transform: hov ? "translateY(-2px)" : "none", display: "flex", flexDirection: "column", border: `1px solid ${T.cardBorder}`, animation: "cardIn 0.3s ease both" }}>
+      {!card.isBanner && coverH > 0 &&
+      <div style={{ height: coverH, background: isImg ? "transparent" : card.bg, flexShrink: 0, overflow: "hidden", position: "relative" }}>
+          {isImg && <ImgPlaceholder type={card.bg} />}
+          <div onClick={(e) => {e.stopPropagation();setMenu(!menu);}} style={{ position: "absolute", top: 7, right: 7, width: 24, height: 24, borderRadius: 6, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", opacity: hov ? 1 : 0, transition: "opacity 0.15s" }}>
+            <Icon d={Ic.more} size={13} color="white" />
+          </div>
+          {menu &&
+        <div style={{ position: "absolute", top: 32, right: 7, background: "white", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", padding: "4px 0", minWidth: 130, zIndex: 50, animation: "popIn 0.15s ease" }}>
+              {["Open", "Rename", "Duplicate", "Move…", "Delete"].map((it) =>
+          <div key={it} style={{ padding: "7px 14px", fontSize: 12.5, color: it === "Delete" ? "#ef4444" : "#111", cursor: "pointer" }} onMouseEnter={(e) => e.currentTarget.style.background = "#f5f3ff"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>{it}</div>
+          )}
+            </div>
+        }
+        </div>
+      }
+      {card.isBanner &&
+      <div style={{ height: coverH, flexShrink: 0, background: isImg ? "transparent" : card.bg, position: "relative", overflow: "hidden" }}>
+          {isImg && <ImgPlaceholder type={card.bg} />}
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, background: "rgba(0,0,0,0.3)" }}>
+            <div style={{ fontSize: 24, fontWeight: 900, letterSpacing: 6, color: "white", textShadow: "0 2px 10px rgba(0,0,0,0.5)", textTransform: "uppercase" }}>Welcome Guide</div>
+            <div style={{ background: "white", color: "#111", fontSize: 11, fontWeight: 700, padding: "5px 14px", borderRadius: 20 }}>Watch More →</div>
+          </div>
+        </div>
+      }
+      {!card.isBanner &&
+      <div style={{ padding: pad, display: "flex", flexDirection: "column", gap: density === "compact" ? 6 : 8 }}>
+          <div style={{ fontSize: titleSize, fontWeight: 600, color: T.text, lineHeight: 1.35, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{card.title}</div>
+          {card.tags.length > 0 &&
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+              {card.tags.slice(0, density === "compact" ? 2 : 3).map((t, i) => <Badge key={i} label={t} color={T.accent} bg={T.accentBg} border={T.accentBorder} />)}
+            </div>
+        }
+          <div style={{ fontSize: 9.5, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 500 }}>Updated: {card.date}</div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <AvatarStack count={card.avatars} />
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {card.progress && <span style={{ background: T.accent, color: "white", fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 10 }}>{card.progress}%</span>}
+              <div onClick={(e) => {e.stopPropagation();onFavToggle(card.id);}} style={{ cursor: "pointer" }}>
+                <Icon d={Ic.heart} size={15} color={card.fav ? "#ef4444" : T.textMuted} fill={card.fav ? "#ef4444" : "none"} />
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>);
+
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HOME — SIDEBAR
+// ─────────────────────────────────────────────────────────────────────────────
+const WORKSPACES = [
+{ id: "personal", label: "Personal Notes", icon: Ic.folder, children: [] },
+{ id: "alpha", label: "Alpha Product v.0", icon: Ic.folder, children: ["PRD to Launch", "Finance", "API Documentation", "GTM Strategy"] }];
+
+const NAV_ITEMS = [
+{ id: "home", label: "Home", icon: Ic.home },
+{ id: "favorites", label: "Favorites", icon: Ic.heart },
+{ id: "welcome", label: "Welcome", icon: Ic.doc }];
+
+
+const SidebarItem = ({ icon, label, active, collapsed, children = [], theme: T, isWs = false, onClick }) => {
+  const [hov, setHov] = useState(false);
+  const [exp, setExp] = useState(isWs && label.includes("Alpha"));
+  const hasKids = children.length > 0;
+
+  const handleClick = () => {
+    if (onClick) {onClick();return;}
+    if (hasKids) setExp(!exp);
+  };
+
+  return (
+    <div style={{ position: "relative" }}>
+      <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} onClick={handleClick} style={{ display: "flex", alignItems: "center", gap: collapsed ? 0 : 9, padding: collapsed ? "9px 0" : "7px 11px", justifyContent: collapsed ? "center" : "flex-start", borderRadius: 8, background: active ? T.accentBg : hov ? T.surfaceAlt : "transparent", cursor: "pointer", transition: "background 0.15s", color: active ? T.accent : T.textMid, position: "relative" }}>
+        <span style={{ flexShrink: 0, display: "flex" }}><Icon d={icon} size={17} color={active ? T.accent : T.textMid} /></span>
+        {!collapsed && <><span style={{ fontSize: 13, fontWeight: 500, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: T.text }}>{label}</span>{hasKids && <Icon d={exp ? Ic.chevD : Ic.chevR} size={12} color={T.textMuted} />}</>}
+        {/* Tooltip */}
+        {collapsed && !hasKids &&
+        <div style={{ position: "absolute", left: "calc(100% + 10px)", top: "50%", transform: "translateY(-50%)", background: T === DARK ? "#374151" : "#111827", color: "white", fontSize: 12, fontWeight: 500, padding: "5px 10px", borderRadius: 7, whiteSpace: "nowrap", pointerEvents: "none", opacity: hov ? 1 : 0, transition: "opacity 0.15s", zIndex: 200 }}>{label}</div>
+        }
+        {/* Popover for folders */}
+        {collapsed && hasKids && hov &&
+        <div style={{ position: "absolute", left: "calc(100% + 10px)", top: "50%", transform: "translateY(-50%)", background: T.surface, boxShadow: "0 8px 24px rgba(0,0,0,0.14)", borderRadius: 10, padding: "4px 0", minWidth: 170, zIndex: 200, animation: "popIn 0.15s ease", border: `1px solid ${T.border}` }}>
+            {children.map((c, i) => <div key={i} style={{ padding: "7px 16px", fontSize: 13, color: T.text, cursor: "pointer", transition: "background 0.1s" }} onMouseEnter={(e) => e.currentTarget.style.background = T.accentBg} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>{c}</div>)}
+          </div>
+        }
+      </div>
+      {!collapsed && hasKids && exp &&
+      <div style={{ marginLeft: 16, borderLeft: `2px solid ${T.border}`, paddingLeft: 8, marginTop: 2 }}>
+          {children.map((c, i) =>
+        <div key={i} style={{ padding: "6px 10px", fontSize: 12.5, color: c === "Finance" ? T.accent : T.textMid, borderRadius: 7, cursor: "pointer", fontWeight: c === "Finance" ? 600 : 400, background: c === "Finance" ? T.accentBg : "transparent", transition: "all 0.1s" }} onMouseEnter={(e) => {if (c !== "Finance") {e.currentTarget.style.background = T.surfaceAlt;e.currentTarget.style.color = T.accent;}}} onMouseLeave={(e) => {if (c !== "Finance") {e.currentTarget.style.background = "transparent";e.currentTarget.style.color = T.textMid;}}}>{c}</div>
+        )}
+        </div>
+      }
+    </div>);
+
+};
+
+const Sidebar = ({ collapsed, onToggle, activeNav, theme: T, onOpenSettings }) => {
+  const W = collapsed ? 62 : 228;
+  return (
+    <div style={{ width: W, minWidth: W, height: "100%", background: T.sidebarBg, borderRight: `1px solid ${T.border}`, display: "flex", flexDirection: "column", transition: "width 0.25s cubic-bezier(0.4,0,0.2,1),min-width 0.25s cubic-bezier(0.4,0,0.2,1)", flexShrink: 0, position: "relative", zIndex: 20, boxShadow: `2px 0 12px rgba(0,0,0,0.04)` }}>
+      {/* Header */}
+      <div style={{ padding: collapsed ? "14px 0 12px" : "14px 12px 12px", borderBottom: `1px solid ${T.border}`, display: "flex", alignItems: "center", gap: collapsed ? 0 : 10, justifyContent: collapsed ? "center" : "flex-start", overflow: "hidden", flexShrink: 0 }}>
+        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#7c3aed,#a855f7)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 700, fontSize: 13, flexShrink: 0 }}>M</div>
+        {!collapsed &&
+        <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 9.5, color: T.textMuted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>Owner</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: T.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Murilo Muniz</div>
+          </div>
+        }
+      </div>
+
+      {/* Toggle button — floats at the right edge, always visible */}
+      <button onClick={onToggle} style={{ position: "absolute", top: 12, right: -11, width: 22, height: 22, borderRadius: "50%", background: T.surface, border: `1.5px solid ${T.border}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: T.accent, zIndex: 30, boxShadow: "0 1px 6px rgba(0,0,0,0.1)", transition: "background 0.15s, border-color 0.15s" }} onMouseEnter={(e) => {e.currentTarget.style.background = T.accentBg;e.currentTarget.style.borderColor = T.accent;}} onMouseLeave={(e) => {e.currentTarget.style.background = T.surface;e.currentTarget.style.borderColor = T.border;}}>
+        <Icon d={collapsed ? Ic.chevR : Ic.chevL} size={11} color={T.accent} />
+      </button>
+
+      {/* Nav */}
+      <div style={{ flex: 1, overflow: "visible", padding: collapsed ? "12px 8px" : "12px 8px", display: "flex", flexDirection: "column", gap: 1 }}>
+        {!collapsed && <div style={{ fontSize: 9.5, color: T.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", padding: "4px 11px 6px", whiteSpace: "nowrap", overflow: "hidden" }}>Main</div>}
+        {NAV_ITEMS.map((it) => <SidebarItem key={it.id} icon={it.icon} label={it.label} active={activeNav === it.id} collapsed={collapsed} theme={T} />)}
+        {WORKSPACES.map((ws) => <SidebarItem key={ws.id} icon={ws.icon} label={ws.label} active={false} collapsed={collapsed} children={ws.children} isWs={true} theme={T} />)}
+        <div style={{ marginTop: 12 }}>
+          {!collapsed && <div style={{ fontSize: 9.5, color: T.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", padding: "4px 11px 6px", whiteSpace: "nowrap", overflow: "hidden" }}>Settings</div>}
+          <SidebarItem icon={Ic.gear} label="Settings" active={false} collapsed={collapsed} theme={T} onClick={onOpenSettings} />
+        </div>
+      </div>
+
+      {/* Bottom */}
+      <div style={{ padding: collapsed ? "8px" : "8px", borderTop: `1px solid ${T.border}`, display: "flex", flexDirection: "column", gap: 1, overflow: "hidden" }}>
+        <SidebarItem icon={Ic.help} label="Help" active={false} collapsed={collapsed} theme={T} />
+        <div style={{ display: "flex", alignItems: "center", gap: collapsed ? 0 : 9, padding: collapsed ? "9px 0" : "7px 11px", justifyContent: collapsed ? "center" : "flex-start", borderRadius: 8, cursor: "pointer", transition: "background 0.15s" }} onMouseEnter={(e) => e.currentTarget.style.background = T.accentBg} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+          <Icon d={Ic.logout} size={17} color={T.accent} />
+          {!collapsed && <span style={{ fontSize: 13, fontWeight: 600, color: T.accent, whiteSpace: "nowrap" }}>Logout Account</span>}
+        </div>
+      </div>
+    </div>);
+
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HOME — TWEAKS PANEL
+// ─────────────────────────────────────────────────────────────────────────────
+const TweaksPanel = ({ tweaks, setTweak, onClose, theme: T }) => {
+  const densityOpts = ["compact", "normal", "spacious"];
+  const layoutOpts = [{ id: "masonry", icon: Ic.layout, label: "Masonry" }, { id: "grid", icon: Ic.grid, label: "Grid" }, { id: "list", icon: Ic.list, label: "List" }];
+
+  return (
+    <div style={{ position: "absolute", bottom: 20, right: 20, width: 256, background: T.surface, border: `1px solid ${T.border}`, borderRadius: 16, boxShadow: "0 12px 40px rgba(0,0,0,0.15)", padding: "16px", zIndex: 300, animation: "popIn 0.2s ease" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+          <Icon d={Ic.sliders} size={15} color={T.accent} />
+          <span style={{ fontSize: 13, fontWeight: 700, color: T.text }}>Tweaks</span>
+        </div>
+        <div onClick={onClose} style={{ cursor: "pointer", color: T.textMuted, borderRadius: 6, padding: 2 }} onMouseEnter={(e) => e.currentTarget.style.color = T.text} onMouseLeave={(e) => e.currentTarget.style.color = T.textMuted}><Icon d={Ic.x} size={15} /></div>
+      </div>
+
+      {/* Dark mode */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Appearance</div>
+        <div style={{ display: "flex", background: T.surfaceAlt, borderRadius: 9, padding: 3, gap: 2 }}>
+          {[{ id: "light", icon: Ic.sun, label: "Light" }, { id: "dark", icon: Ic.moon, label: "Dark" }].map((m) =>
+          <button key={m.id} onClick={() => setTweak("darkMode", m.id === "dark")} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5, padding: "7px 0", borderRadius: 7, border: "none", background: m.id === "dark" && tweaks.darkMode || m.id === "light" && !tweaks.darkMode ? T.surface : "transparent", color: m.id === "dark" && tweaks.darkMode || m.id === "light" && !tweaks.darkMode ? T.accent : T.textMuted, fontSize: 12, fontWeight: 600, cursor: "pointer", boxShadow: m.id === "dark" && tweaks.darkMode || m.id === "light" && !tweaks.darkMode ? "0 1px 4px rgba(0,0,0,0.1)" : "none", transition: "all 0.15s" }}>
+              <Icon d={m.icon} size={13} color={m.id === "dark" && tweaks.darkMode || m.id === "light" && !tweaks.darkMode ? T.accent : T.textMuted} />{m.label}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Layout */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Layout</div>
+        <div style={{ display: "flex", gap: 6 }}>
+          {layoutOpts.map((l) =>
+          <button key={l.id} onClick={() => setTweak("layout", l.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, padding: "9px 4px", borderRadius: 9, border: `1.5px solid ${tweaks.layout === l.id ? T.accent : T.border}`, background: tweaks.layout === l.id ? T.accentBg : T.surfaceAlt, color: tweaks.layout === l.id ? T.accent : T.textMid, fontSize: 10, fontWeight: 600, cursor: "pointer", transition: "all 0.15s" }}>
+              <Icon d={l.icon} size={16} color={tweaks.layout === l.id ? T.accent : T.textMid} />{l.label}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Density */}
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Density</div>
+        <div style={{ display: "flex", background: T.surfaceAlt, borderRadius: 9, padding: 3, gap: 2 }}>
+          {densityOpts.map((d) =>
+          <button key={d} onClick={() => setTweak("density", d)} style={{ flex: 1, padding: "7px 0", borderRadius: 7, border: "none", background: tweaks.density === d ? T.surface : "transparent", color: tweaks.density === d ? T.accent : T.textMuted, fontSize: 11, fontWeight: 600, cursor: "pointer", boxShadow: tweaks.density === d ? "0 1px 4px rgba(0,0,0,0.1)" : "none", transition: "all 0.15s", textTransform: "capitalize" }}>
+              {d}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>);
+
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HOME SCREEN
+// ─────────────────────────────────────────────────────────────────────────────
+const HomeScreen = ({ profile, onOpenDoc, onOpenSettings }) => {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [cards, setCards] = useState(CARD_DATA);
+  const [showNewDoc, setShowNewDoc] = useState(false);
+  const [showTweaks, setShowTweaks] = useState(false);
+  const [showNotifs, setShowNotifs] = useState(false);
+  const [tweaks, setTweaksState] = useState({ darkMode: false, layout: "masonry", density: "normal" });
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.data?.type === "__activate_edit_mode") setShowTweaks(true);
+      if (e.data?.type === "__deactivate_edit_mode") setShowTweaks(false);
+    };
+    window.addEventListener("message", handler);
+    window.parent.postMessage({ type: "__edit_mode_available" }, "*");
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
+  const setTweak = (k, v) => {
+    setTweaksState((t) => ({ ...t, [k]: v }));
+    window.parent.postMessage({ type: "__edit_mode_set_keys", edits: { [k]: v } }, "*");
+  };
+
+  const T = tweaks.darkMode ? DARK : LIGHT;
+  const toggleFav = useCallback((id) => setCards((cs) => cs.map((c) => c.id === id ? { ...c, fav: !c.fav } : c)), []);
+  const name = profile?.profile?.firstName || "Murilo";
+
+  const gridStyle = tweaks.layout === "masonry" ?
+  { columns: "4 180px", columnGap: 12, padding: "16px 20px 24px" } :
+  tweaks.layout === "grid" ?
+  { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 12, padding: "16px 20px 24px" } :
+  { display: "flex", flexDirection: "column", gap: 8, padding: "16px 20px 24px" };
+
+  return (
+    <div style={{ width: "100%", height: "100%", display: "flex", background: T.bg, transition: "background 0.3s" }}>
+      {/* SIDEBAR — full height on the left */}
+      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((v) => !v)} activeNav="home" theme={T} onOpenSettings={onOpenSettings} />
+
+      {/* MAIN CONTENT */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
+        {/* Top bar */}
+        <div style={{ height: 52, display: "flex", alignItems: "center", padding: "0 22px", borderBottom: `1px solid ${T.border}`, background: T.surface, flexShrink: 0, gap: 12, transition: "background 0.3s,border-color 0.3s" }}>
+          <div style={{ flex: 1 }}>
+            <span style={{ fontSize: 18, color: T.text, fontWeight: 300 }}>Hi {name}, </span>
+            <span style={{ fontSize: 18, color: T.text, fontWeight: 800 }}>what are we write together?</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
+            <div onClick={() => setShowTweaks((v) => !v)} style={{ cursor: "pointer", color: showTweaks ? T.accent : T.textMuted, transition: "color 0.15s" }}>
+              <Icon d={Ic.sliders} size={18} />
+            </div>
+            <div onClick={() => setShowNotifs((v) => !v)} style={{ position: "relative", cursor: "pointer", color: showNotifs ? T.accent : T.textMuted, transition: "color 0.15s" }}>
+              <Icon d={Ic.bell} size={19} color={showNotifs ? T.accent : T.textMuted} />
+              <div style={{ position: "absolute", top: -2, right: -2, width: 7, height: 7, borderRadius: "50%", background: T.accent, border: `1.5px solid ${T.surface}` }} />
+            </div>
+            <div style={{ width: 22, height: 22, borderRadius: 6, background: T.text, display: "flex", alignItems: "center", justifyContent: "center", color: T.surface, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>?</div>
+          </div>
+        </div>
+
+        {/* Search + CTA */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 20px", flexShrink: 0, background: T.surface, borderBottom: `1px solid ${T.border}`, transition: "background 0.3s" }}>
+          <SearchBarHome theme={T} />
+          <button onClick={() => setShowNewDoc(true)} style={{ background: T.accent, color: "white", border: "none", borderRadius: 9, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 7, boxShadow: `0 2px 10px rgba(124,58,237,0.3)`, transition: "all 0.2s", whiteSpace: "nowrap" }}
+          onMouseEnter={(e) => {e.currentTarget.style.filter = "brightness(1.1)";e.currentTarget.style.transform = "translateY(-1px)";}}
+          onMouseLeave={(e) => {e.currentTarget.style.filter = "none";e.currentTarget.style.transform = "none";}}>
+            New Document <Icon d={Ic.plus} size={14} color="white" />
+          </button>
+        </div>
+
+        {/* Cards */}
+        <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", position: "relative" }}>
+          <div style={gridStyle}>
+            {cards.map((card, i) =>
+            <div key={card.id} onClick={() => onOpenDoc && onOpenDoc(card)} style={tweaks.layout === "masonry" ? { breakInside: "avoid", marginBottom: 12, display: "block" } : {}}>
+                <DocCard card={card} onFavToggle={toggleFav} theme={T} density={tweaks.density} layout={tweaks.layout} />
+              </div>
+            )}
+          </div>
+          {showTweaks && <TweaksPanel tweaks={tweaks} setTweak={setTweak} onClose={() => {setShowTweaks(false);window.parent.postMessage({ type: "__edit_mode_dismissed" }, "*");}} theme={T} />}
+        </div>
+      </div>
+
+      {showNewDoc && <NewDocModal onClose={() => setShowNewDoc(false)} theme={T} />}
+      {showNotifs && <NotificationsPanel theme={T} onClose={() => setShowNotifs(false)} />}
+    </div>);
+
+};
+
+const SearchBarHome = ({ theme: T }) => {
+  const [focused, setFocused] = useState(false);
+  return (
+    <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, border: focused ? `1.5px solid ${T.accent}` : `1.5px solid ${T.border}`, borderRadius: 9, padding: "8px 13px", background: T.inputBg, transition: "all 0.2s", boxShadow: focused ? `0 0 0 3px ${T.accentBg}` : "none" }}>
+      <Icon d={Ic.search} size={14} color={T.accent} />
+      <input onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} placeholder="Search for anything..." style={{ border: "none", outline: "none", fontSize: 13, color: T.text, background: "transparent", flex: 1 }} />
+      <Icon d={Ic.mic} size={15} color={T.accent} />
+    </div>);
+
+};
+
+const NewDocModal = ({ onClose, theme: T }) => {
+  const [title, setTitle] = useState("");
+  const [type, setType] = useState("doc");
+  return (
+    <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 500, backdropFilter: "blur(3px)" }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: T.surface, borderRadius: 18, padding: "28px", width: 420, boxShadow: "0 20px 60px rgba(0,0,0,0.2)", animation: "popIn 0.2s ease", border: `1px solid ${T.border}` }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: T.text }}>New Document</div>
+          <div onClick={onClose} style={{ cursor: "pointer", color: T.textMuted }}><Icon d={Ic.x} size={17} /></div>
+        </div>
+        <input autoFocus placeholder="Document title..." value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: "100%", padding: "10px 13px", border: `1.5px solid ${T.border}`, borderRadius: 9, fontSize: 14, outline: "none", color: T.text, background: T.inputBg, marginBottom: 12, transition: "border-color 0.2s" }} onFocus={(e) => e.target.style.borderColor = T.accent} onBlur={(e) => e.target.style.borderColor = T.border} />
+        <div style={{ display: "flex", gap: 7, marginBottom: 20, flexWrap: "wrap" }}>
+          {["doc", "note", "prd", "spec", "research"].map((tp) =>
+          <button key={tp} onClick={() => setType(tp)} style={{ padding: "6px 13px", borderRadius: 20, fontSize: 12, fontWeight: 600, border: type === tp ? `1.5px solid ${T.accent}` : `1.5px solid ${T.border}`, background: type === tp ? T.accentBg : T.surfaceAlt, color: type === tp ? T.accent : T.textMid, cursor: "pointer", transition: "all 0.15s", textTransform: "capitalize" }}>{tp}</button>
+          )}
+        </div>
+        <div style={{ display: "flex", gap: 9, justifyContent: "flex-end" }}>
+          <button onClick={onClose} style={{ padding: "9px 18px", borderRadius: 9, border: `1.5px solid ${T.border}`, background: T.surfaceAlt, color: T.textMid, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
+          <button onClick={onClose} style={{ padding: "9px 20px", borderRadius: 9, border: "none", background: T.accent, color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: `0 2px 10px rgba(124,58,237,0.3)` }}>Create</button>
+        </div>
+      </div>
+    </div>);
+
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EDITOR SCREEN
+// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// NOTIFICATIONS DATA
+// ─────────────────────────────────────────────────────────────────────────────
+const TEAM_MEMBERS = [
+{ id: "murilo", name: "Murilo Muniz", role: "Product", color: "#7c3aed", initials: "MM" },
+{ id: "ana", name: "Ana Costa", role: "Legal", color: "#ec4899", initials: "AC" },
+{ id: "rafael", name: "Rafael Souza", role: "Developer", color: "#3b82f6", initials: "RS" },
+{ id: "juliana", name: "Juliana Pereira", role: "Security", color: "#10b981", initials: "JP" },
+{ id: "carlos", name: "Carlos Lima", role: "Research", color: "#f59e0b", initials: "CL" }];
+
+
+const NOTIFICATIONS = [
+{ id: 1, type: "edit", user: "ana", doc: "PRD to launch…", time: "2m ago", read: false, detail: "Edited the Goals section" },
+{ id: 2, type: "mention", user: "rafael", doc: "API Documentation v2.4", time: "14m ago", read: false, detail: "Mentioned you in a comment" },
+{ id: 3, type: "ai", user: "juliana", doc: "Security Audit Checklist", time: "31m ago", read: false, detail: "Generated risk assessment with AI" },
+{ id: 4, type: "edit", user: "carlos", doc: "Research: Local LLM Perf", time: "1h ago", read: true, detail: "Added 3 new sections" },
+{ id: 5, type: "invite", user: "ana", doc: "Legal Contract Templates", time: "2h ago", read: true, detail: "Invited you to collaborate" },
+{ id: 6, type: "comment", user: "rafael", doc: "GTM Strategy 2025", time: "3h ago", read: true, detail: "Left a comment on slide 4" },
+{ id: 7, type: "edit", user: "juliana", doc: "Finance Q4 Review", time: "5h ago", read: true, detail: "Completed compliance review" },
+{ id: 8, type: "ai", user: "carlos", doc: "Onboarding Guide v3", time: "Yesterday", read: true, detail: "Ran AI rewrite on intro" }];
+
+
+const NOTIF_ICONS = {
+  edit: { icon: Ic.doc, color: "#7c3aed", bg: "#f3f0ff" },
+  mention: { icon: Ic.user, color: "#ec4899", bg: "#fdf2f8" },
+  ai: { icon: Ic.zap, color: "#f59e0b", bg: "#fffbeb" },
+  invite: { icon: Ic.users, color: "#3b82f6", bg: "#eff6ff" },
+  comment: { icon: Ic.doc, color: "#10b981", bg: "#f0fdf4" }
+};
+
+const NotificationsPanel = ({ theme: T, onClose }) => {
+  const [notifs, setNotifs] = useState(NOTIFICATIONS);
+  const [filter, setFilter] = useState("all");
+  const unread = notifs.filter((n) => !n.read).length;
+
+  const markAll = () => setNotifs((ns) => ns.map((n) => ({ ...n, read: true })));
+  const markOne = (id) => setNotifs((ns) => ns.map((n) => n.id === id ? { ...n, read: true } : n));
+
+  const filtered = filter === "unread" ? notifs.filter((n) => !n.read) : notifs;
+
+  return (
+    <div style={{ position: "absolute", top: 0, right: 0, width: 360, height: "100%", background: T.surface, borderLeft: `1px solid ${T.border}`, display: "flex", flexDirection: "column", zIndex: 400, boxShadow: "-8px 0 32px rgba(0,0,0,0.1)", animation: "slidePanel 0.25s cubic-bezier(0.4,0,0.2,1)" }}>
+      {/* Header */}
+      <div style={{ padding: "16px 18px 12px", borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: T.text }}>Notifications</div>
+            {unread > 0 && <div style={{ background: T.accent, color: "white", fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 20 }}>{unread}</div>}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {unread > 0 && <button onClick={markAll} style={{ fontSize: 11, fontWeight: 600, color: T.accent, background: "none", border: "none", cursor: "pointer", padding: "3px 8px", borderRadius: 6, transition: "background 0.15s" }} onMouseEnter={(e) => e.currentTarget.style.background = T.accentBg} onMouseLeave={(e) => e.currentTarget.style.background = "none"}>Mark all read</button>}
+            <div onClick={onClose} style={{ cursor: "pointer", color: T.textMuted, padding: 4, borderRadius: 6, transition: "color 0.15s" }} onMouseEnter={(e) => e.currentTarget.color = T.text} onMouseLeave={(e) => e.currentTarget.color = T.textMuted}><Icon d={Ic.x} size={16} /></div>
+          </div>
+        </div>
+        {/* Filter tabs */}
+        <div style={{ display: "flex", gap: 4, background: T.surfaceAlt, borderRadius: 8, padding: 3 }}>
+          {["all", "unread"].map((f) =>
+          <button key={f} onClick={() => setFilter(f)} style={{ flex: 1, padding: "5px 0", borderRadius: 6, border: "none", background: filter === f ? T.surface : "transparent", color: filter === f ? T.accent : T.textMuted, fontSize: 12, fontWeight: 600, cursor: "pointer", boxShadow: filter === f ? "0 1px 3px rgba(0,0,0,0.08)" : "none", transition: "all 0.15s", textTransform: "capitalize" }}>
+              {f}{f === "unread" && unread > 0 ? ` (${unread})` : ""}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Feed */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "6px 0" }}>
+        {filtered.length === 0 &&
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 10, color: T.textMuted }}>
+            <Icon d={Ic.bell} size={32} color={T.border} />
+            <span style={{ fontSize: 13, fontWeight: 500 }}>All caught up!</span>
+          </div>
+        }
+        {filtered.map((n, i) => {
+          const member = TEAM_MEMBERS.find((m) => m.id === n.user);
+          const cfg = NOTIF_ICONS[n.type] || NOTIF_ICONS.edit;
+          return (
+            <div key={n.id} onClick={() => markOne(n.id)} style={{ display: "flex", gap: 12, padding: "12px 18px", cursor: "pointer", background: !n.read ? `${T.accentBg}88` : "transparent", borderLeft: !n.read ? `3px solid ${T.accent}` : "3px solid transparent", transition: "background 0.15s", animation: `fadeUp 0.3s ease ${i * 0.04}s both` }}
+            onMouseEnter={(e) => e.currentTarget.style.background = T.surfaceAlt}
+            onMouseLeave={(e) => e.currentTarget.style.background = !n.read ? `${T.accentBg}88` : "transparent"}>
+              {/* Avatar with type badge */}
+              <div style={{ position: "relative", flexShrink: 0 }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: member?.color || "#7c3aed", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 12, fontWeight: 700 }}>{member?.initials || "?"}</div>
+                <div style={{ position: "absolute", bottom: -2, right: -2, width: 18, height: 18, borderRadius: "50%", background: cfg.bg, border: `1.5px solid ${T.surface}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon d={cfg.icon} size={9} color={cfg.color} stroke={2} />
+                </div>
+              </div>
+              {/* Content */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12.5, color: T.text, lineHeight: 1.4, marginBottom: 3 }}>
+                  <strong>{member?.name}</strong> <span style={{ fontWeight: 400, color: T.textMid }}>{n.detail}</span>
+                </div>
+                <div style={{ fontSize: 11, color: T.textMuted, display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                  <Icon d={Ic.doc} size={10} color={T.textMuted} />{n.doc}
+                </div>
+                <div style={{ fontSize: 10, color: T.textMuted, display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ color: member?.color, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{member?.role}</span>
+                  <span>·</span>{n.time}
+                  {!n.read && <div style={{ width: 5, height: 5, borderRadius: "50%", background: T.accent, marginLeft: 4 }} />}
+                </div>
+              </div>
+            </div>);
+
+        })}
+      </div>
+
+      {/* Team online */}
+      <div style={{ padding: "12px 18px", borderTop: `1px solid ${T.border}`, flexShrink: 0 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Online now</div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {TEAM_MEMBERS.slice(1, 4).map((m) =>
+          <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 6, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: 20, padding: "4px 10px" }}>
+              <div style={{ position: "relative" }}>
+                <div style={{ width: 22, height: 22, borderRadius: "50%", background: m.color, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 9, fontWeight: 700 }}>{m.initials}</div>
+                <div style={{ position: "absolute", bottom: 0, right: 0, width: 6, height: 6, borderRadius: "50%", background: "#10b981", border: `1.5px solid ${T.surfaceAlt}` }} />
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 500, color: T.text }}>{m.name.split(" ")[0]}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>);
+
+};
+
+const BLOCK_TYPES = [
+{ id: "p", label: "Text", hint: "Plain paragraph" },
+{ id: "h1", label: "Heading 1", hint: "Large section header" },
+{ id: "h2", label: "Heading 2", hint: "Medium section header" },
+{ id: "h3", label: "Heading 3", hint: "Small section header" },
+{ id: "bullet", label: "Bullet list", hint: "Unordered list item" },
+{ id: "num", label: "Numbered list", hint: "Ordered list item" },
+{ id: "code", label: "Code block", hint: "Monospaced code" },
+{ id: "quote", label: "Blockquote", hint: "Highlighted quote" },
+{ id: "divider", label: "Divider", hint: "Horizontal rule" },
+{ id: "ai", label: "✦ AI Write", hint: "Generate with local AI" }];
+
+
+const AI_PROMPTS = [
+"Continue writing this section...",
+"Summarise the above in 3 bullet points",
+"Improve tone: make it more concise",
+"Translate to Portuguese",
+"Generate acceptance criteria",
+"Write an executive summary",
+"Identify risks and mitigations"];
+
+
+const INIT_BLOCKS = [
+{ id: 1, type: "h1", text: "PRD to launch the new productivity SaaS Platform" },
+{ id: 2, type: "p", text: "This document outlines the product requirements for the next-generation Writeopia platform, targeting developer, legal, and research teams who require a private, local-AI-powered workspace." },
+{ id: 3, type: "h2", text: "PRD to launch the new productivity SaaS Platform" },
+{ id: 4, type: "p", text: "Teams handling sensitive information — source code, legal contracts, compliance reports — cannot safely use cloud-based AI tools. Data leaves their perimeter, creating significant security and compliance risk." },
+{ id: 5, type: "h2", text: "Goals" },
+{ id: 6, type: "bullet", text: "100% local AI inference — no data leaves the machine" },
+{ id: 7, type: "bullet", text: "Multi-model support (Ollama, LM Studio)" },
+{ id: 8, type: "bullet", text: "Real-time collaboration within the team's local network" },
+{ id: 9, type: "h2", text: "Non-Goals" },
+{ id: 10, type: "bullet", text: "Cloud sync or external storage" },
+{ id: 11, type: "bullet", text: "Mobile apps in the initial release" },
+{ id: 12, type: "h2", text: "User Stories" },
+{ id: 13, type: "p", text: "As a developer, I want to ask questions about my codebase without any data leaving my laptop, so that I maintain full IP control." }];
+
+
+const BlockRenderer = ({ block, focused, theme: T, onFocus, onChange, onKeyDown }) => {
+  const ref = useRef(null);
+  useEffect(() => {if (focused && ref.current) ref.current.focus();}, [focused]);
+
+  const baseStyle = { outline: "none", width: "100%", background: "transparent", border: "none", resize: "none", fontFamily: "Inter, sans-serif", color: T.text, caretColor: T.accent };
+
+  const styles = {
+    h1: { fontSize: 28, fontWeight: 800, lineHeight: 1.25, letterSpacing: "-0.02em", marginBottom: 0, ...baseStyle },
+    h2: { fontSize: 20, fontWeight: 700, lineHeight: 1.3, letterSpacing: "-0.01em", ...baseStyle },
+    h3: { fontSize: 16, fontWeight: 700, lineHeight: 1.4, ...baseStyle },
+    p: { fontSize: 15, fontWeight: 400, lineHeight: 1.75, color: T.textMid, ...baseStyle },
+    bullet: { fontSize: 15, fontWeight: 400, lineHeight: 1.75, color: T.textMid, ...baseStyle },
+    num: { fontSize: 15, fontWeight: 400, lineHeight: 1.75, color: T.textMid, ...baseStyle },
+    code: { fontSize: 13, fontWeight: 400, lineHeight: 1.7, fontFamily: "monospace", background: T.surfaceAlt, color: T.accent, padding: "12px 16px", borderRadius: 8, display: "block", ...baseStyle },
+    quote: { fontSize: 15, fontWeight: 400, lineHeight: 1.75, color: T.textMid, borderLeft: `3px solid ${T.accent}`, paddingLeft: 16, fontStyle: "italic", ...baseStyle }
+  };
+
+  if (block.type === "divider") {
+    return <div style={{ height: 1, background: T.border, margin: "8px 0", cursor: "pointer" }} onClick={onFocus} />;
+  }
+
+  const s = styles[block.type] || styles.p;
+  const prefix = block.type === "bullet" ? <span style={{ color: T.accent, marginRight: 8, flexShrink: 0 }}>•</span> :
+  block.type === "num" ? <span style={{ color: T.textMuted, marginRight: 8, flexShrink: 0, minWidth: 18 }}>1.</span> :
+  null;
+
+  return (
+    <div style={{ display: "flex", alignItems: block.type === "h1" || block.type === "h2" || block.type === "h3" ? "center" : "flex-start", width: "100%" }}>
+      {prefix}
+      <textarea
+        ref={ref}
+        value={block.text}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={onFocus}
+        onKeyDown={onKeyDown}
+        rows={1}
+        style={{ ...s, overflow: "hidden", minHeight: 28 }}
+        onInput={(e) => {e.target.style.height = "auto";e.target.style.height = e.target.scrollHeight + "px";}} />
+      
+    </div>);
+
+};
+
+const EditorScreen = ({ doc, onBack, darkMode = false }) => {
+  const T = darkMode ? DARK : LIGHT;
+  const [blocks, setBlocks] = useState(INIT_BLOCKS);
+  const [focused, setFocused] = useState(1);
+  const [showSlash, setShowSlash] = useState(false);
+  const [slashQ, setSlashQ] = useState("");
+  const [toolbar, setToolbar] = useState(null);
+  const [aiPanel, setAiPanel] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarTab, setSidebarTab] = useState("ai"); // 'ai' | 'toc' | 'info'
+  const [showNotifs, setShowNotifs] = useState(false);
+  const [showMention, setShowMention] = useState(false);
+  const [mentionQ, setMentionQ] = useState("");
+  const wordCount = blocks.reduce((acc, b) => acc + (b.text?.split(/\s+/).filter(Boolean).length || 0), 0);
+
+  const updateBlock = (id, text) => {
+    // Slash command
+    const slashMatch = text.match(/\/([^/]*)$/);
+    if (slashMatch) {setShowSlash(true);setSlashQ(slashMatch[1]);} else
+    {setShowSlash(false);}
+    // @ mention
+    const mentionMatch = text.match(/@([\w]*)$/);
+    if (mentionMatch) {setShowMention(true);setMentionQ(mentionMatch[1]);} else
+    {setShowMention(false);}
+    setBlocks((bs) => bs.map((b) => b.id === id ? { ...b, text } : b));
+  };
+
+  const insertBlock = (type, afterId) => {
+    const newB = { id: Date.now(), type, text: "" };
+    setBlocks((bs) => {
+      const idx = bs.findIndex((b) => b.id === afterId);
+      const next = [...bs];
+      next.splice(idx + 1, 0, newB);
+      return next;
+    });
+    setFocused(newB.id);
+    setShowSlash(false);
+  };
+
+  const handleKeyDown = (e, blockId) => {
+    if (e.key === "Enter" && !e.shiftKey) {e.preventDefault();insertBlock("p", blockId);}
+    if (e.key === "Escape") {setShowSlash(false);setShowMention(false);}
+  };
+
+  const insertMention = (member) => {
+    setBlocks((bs) => bs.map((b) => {
+      if (b.id !== focused) return b;
+      const text = b.text.replace(/@[\w]*$/, `@${member.name} `);
+      return { ...b, text };
+    }));
+    setShowMention(false);
+  };
+
+  const filteredMembers = TEAM_MEMBERS.filter((m) => m.name.toLowerCase().includes(mentionQ.toLowerCase()));
+
+  const handleMouseUp = () => {
+    const sel = window.getSelection();
+    if (sel && sel.toString().length > 0) {
+      const r = sel.getRangeAt(0).getBoundingClientRect();
+      setToolbar({ x: r.left + r.width / 2, y: r.top - 50 });
+    } else {setToolbar(null);}
+  };
+
+  const triggerAI = (prompt) => {
+    setAiLoading(true);
+    setAiResult("");
+    setAiPanel(true);
+    let text = "Based on your document context, here is a suggested continuation that maintains the technical precision and clear structure of your PRD. The local AI model processed this entirely on-device with zero data leaving your environment...";
+    let i = 0;
+    const iv = setInterval(() => {
+      if (i >= text.length) {clearInterval(iv);setAiLoading(false);return;}
+      setAiResult((t) => t + text[i]);
+      i++;
+    }, 18);
+  };
+
+  const filteredBlocks = BLOCK_TYPES.filter((b) => b.label.toLowerCase().includes((slashQ || '').toLowerCase()));
+  const tocItems = blocks.filter((b) => b.type === "h1" || b.type === "h2" || b.type === "h3").slice(0, 12);
+  const docTitle = doc?.title || "PRD to launch the new productivity SaaS Platform";
+
+  return (
+    <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", background: T.bg, transition: "background 0.3s" }}>
+      {/* Editor topbar */}
+      <div style={{ height: 48, display: "flex", alignItems: "center", padding: "0 20px", gap: 12, borderBottom: `1px solid ${T.border}`, background: T.surface, flexShrink: 0, transition: "background 0.3s" }}>
+        <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: `1px solid ${T.border}`, borderRadius: 7, padding: "5px 11px", fontSize: 12, fontWeight: 600, color: T.textMid, cursor: "pointer", transition: "all 0.15s" }}
+        onMouseEnter={(e) => {e.currentTarget.style.borderColor = T.accent;e.currentTarget.style.color = T.accent;}}
+        onMouseLeave={(e) => {e.currentTarget.style.borderColor = T.border;e.currentTarget.style.color = T.textMid;}}>
+          <Icon d={Ic.arrowL} size={13} /> Home
+        </button>
+        <div style={{ width: 1, height: 20, background: T.border }} />
+        {/* Breadcrumb */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: T.textMuted }}>
+          <span>Alpha Product v.0</span>
+          <Icon d={Ic.chevR} size={12} />
+          <span style={{ color: T.text, fontWeight: 500 }}>PRD to launch…</span>
+        </div>
+        <div style={{ flex: 1 }} />
+        {/* Status */}
+        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "#10b981", fontWeight: 600 }}>
+          <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} />
+          Saved
+        </div>
+        <div style={{ fontSize: 11, color: T.textMuted }}>{wordCount} words</div>
+        {/* Collaborators */}
+        <AvatarStack count={2} />
+        <div style={{ width: 1, height: 20, background: T.border }} />
+        <button onClick={() => setSidebarOpen((v) => !v)} style={{ display: "flex", alignItems: "center", gap: 5, background: sidebarOpen ? T.accentBg : "none", border: `1px solid ${sidebarOpen ? T.accentBorder : T.border}`, borderRadius: 7, padding: "5px 11px", fontSize: 12, fontWeight: 600, color: sidebarOpen ? T.accent : T.textMid, cursor: "pointer", transition: "all 0.15s" }}>
+          <Icon d={Ic.layout} size={13} color={sidebarOpen ? T.accent : T.textMid} /> Context
+        </button>
+        <button onClick={() => triggerAI(AI_PROMPTS[0])} style={{ display: "flex", alignItems: "center", gap: 6, background: T.accent, border: "none", borderRadius: 7, padding: "5px 14px", fontSize: 12, fontWeight: 700, color: "white", cursor: "pointer", boxShadow: `0 2px 8px rgba(124,58,237,0.3)`, transition: "all 0.15s" }}
+        onMouseEnter={(e) => e.currentTarget.style.filter = "brightness(1.1)"}
+        onMouseLeave={(e) => e.currentTarget.style.filter = "none"}>
+          ✦ AI
+        </button>
+      </div>
+
+      {/* Formatting toolbar (selection-triggered) */}
+      {toolbar &&
+      <div style={{ position: "fixed", left: toolbar.x, top: toolbar.y, transform: "translateX(-50%)", background: "#1c1c2e", borderRadius: 9, padding: "6px 8px", display: "flex", gap: 2, zIndex: 600, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", animation: "popIn 0.15s ease" }}>
+          {[["B", "font-weight:bold"], ["I", "font-style:italic"], ["U", "text-decoration:underline"], ["S", "text-decoration:line-through"]].map(([l]) =>
+        <button key={l} style={{ width: 28, height: 28, borderRadius: 6, border: "none", background: "transparent", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "background 0.1s" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>{l}</button>
+        )}
+          <div style={{ width: 1, background: "rgba(255,255,255,0.15)", margin: "2px 4px" }} />
+          <button onClick={() => {setAiPanel(true);triggerAI("Improve the selected text");setToolbar(null);}} style={{ padding: "0 10px", height: 28, borderRadius: 6, border: "none", background: "#7c3aed", color: "white", fontSize: 11, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>✦ AI</button>
+        </div>
+      }
+
+      {/* Body */}
+      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+        {/* Editor area */}
+        <div style={{ flex: 1, overflowY: "auto", display: "flex", justifyContent: "center", padding: "0 24px" }} onMouseUp={handleMouseUp} onClick={() => setToolbar(null)}>
+          <div style={{ width: "100%", maxWidth: 720, padding: "48px 0 120px", position: "relative" }}>
+            {/* Tags + meta */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
+              {["Product", "Strategy", "Alpha v.0"].map((t) =>
+              <Badge key={t} label={t} color={T.accent} bg={T.accentBg} border={T.accentBorder} />
+              )}
+              <span style={{ fontSize: 11, color: T.textMuted, alignSelf: "center", marginLeft: 4 }}>Updated Nov 5, 2025</span>
+            </div>
+
+            {/* Blocks */}
+            {blocks.map((block) =>
+            <div key={block.id} style={{ position: "relative", padding: "2px 0", marginBottom: block.type === "h1" ? 12 : block.type === "h2" ? 8 : 4, background: block.type === "h1" ? "rgb(243, 240, 255)" : "transparent", height: block.type === "h1" ? 46 : "auto", display:"flex", alignItems:"center", borderRadius: block.type === "h1" ? 8 : 0 }}>
+                {/* + button on hover */}
+                <div className="block-add" style={{ position: "absolute", left: -36, top: "50%", transform: "translateY(-50%)", opacity: focused === block.id ? 0.5 : 0, transition: "opacity 0.15s", cursor: "pointer", color: T.textMuted }} onClick={() => insertBlock("p", block.id)}>
+                  <Icon d={Ic.plus} size={16} />
+                </div>
+                <BlockRenderer block={block} focused={focused === block.id} theme={T} onFocus={() => setFocused(block.id)} onChange={(t) => updateBlock(block.id, t)} onKeyDown={(e) => handleKeyDown(e, block.id)} />
+              </div>
+            )}
+
+            {/* Slash command menu */}
+            {showSlash &&
+            <div style={{ position: "absolute", background: T.surface, border: `1px solid ${T.border}`, borderRadius: 12, boxShadow: "0 8px 30px rgba(0,0,0,0.14)", padding: "6px 0", width: 280, zIndex: 400, animation: "popIn 0.15s ease", left: 80 }}>
+                <div style={{ padding: "4px 12px 6px", fontSize: 10, fontWeight: 700, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.08em" }}>Insert block</div>
+                {filteredBlocks.map((bt) =>
+              <div key={bt.id} onClick={() => insertBlock(bt.id, focused)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 12px", cursor: "pointer", transition: "background 0.1s" }} onMouseEnter={(e) => e.currentTarget.style.background = T.accentBg} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+                    <div style={{ width: 28, height: 28, borderRadius: 7, background: T.surfaceAlt, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: T.accent, flexShrink: 0 }}>{bt.label.slice(0, 2)}</div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{bt.label}</div>
+                      <div style={{ fontSize: 11, color: T.textMuted }}>{bt.hint}</div>
+                    </div>
+                  </div>
+              )}
+              </div>
+            }
+
+      {/* @ mention popover */}
+      {showMention &&
+            <div style={{ position: "absolute", left: 120, bottom: 80, background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", padding: "4px 0", minWidth: 200, zIndex: 500, animation: "popIn 0.15s ease" }}>
+          <div style={{ padding: "4px 12px 6px", fontSize: 10, fontWeight: 700, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.08em" }}>Mention teammate</div>
+          {filteredMembers.map((m) =>
+              <div key={m.id} onClick={() => insertMention(m)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 12px", cursor: "pointer", transition: "background 0.1s" }} onMouseEnter={(e) => e.currentTarget.style.background = T.surfaceAlt} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+              <div style={{ width: 26, height: 26, borderRadius: "50%", background: m.color, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{m.initials}</div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{m.name}</div>
+                <div style={{ fontSize: 11, color: T.textMuted }}>{m.role}</div>
+              </div>
+            </div>
+              )}
+        </div>
+            }
+
+            {/* Empty area prompt */}
+            <div onClick={() => insertBlock("p", blocks[blocks.length - 1].id)} style={{ marginTop: 24, color: T.textMuted, fontSize: 14, cursor: "text", padding: "8px 0", display: "flex", alignItems: "center", gap: 8 }}>
+              <Icon d={Ic.plus} size={15} color={T.textMuted} />
+              <span>Type <kbd style={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: 4, padding: "1px 5px", fontSize: 12, fontFamily: "monospace" }}>/</kbd> for commands, or start writing…</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Context sidebar */}
+        {sidebarOpen &&
+        <div style={{ width: 268, flexShrink: 0, borderLeft: `1px solid ${T.border}`, background: T.surface, display: "flex", flexDirection: "column", overflow: "hidden", transition: "background 0.3s", animation: "slideR 0.2s ease" }}>
+            {/* Tab bar */}
+            <div style={{ display: "flex", borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
+              {[{ id: "ai", label: "✦ AI" }, { id: "toc", label: "Outline" }, { id: "info", label: "Info" }].map((tab) =>
+            <button key={tab.id} onClick={() => setSidebarTab(tab.id)} style={{ flex: 1, padding: "10px 0", border: "none", background: "transparent", fontSize: 12, fontWeight: 600, color: sidebarTab === tab.id ? T.accent : T.textMuted, cursor: "pointer", borderBottom: sidebarTab === tab.id ? `2px solid ${T.accent}` : "2px solid transparent", transition: "all 0.15s", marginBottom: -1 }}>{tab.label}</button>
+            )}
+            </div>
+
+            {/* AI tab */}
+            {sidebarTab === "ai" &&
+          <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
+                <div style={{ padding: "14px 16px", borderBottom: `1px solid ${T.border}` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Quick prompts</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                    {AI_PROMPTS.map((p, i) =>
+                <button key={i} onClick={() => triggerAI(p)} style={{ textAlign: "left", background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: 7, padding: "7px 10px", fontSize: 11.5, color: T.textMid, cursor: "pointer", fontFamily: "Inter", transition: "all 0.15s", lineHeight: 1.4 }} onMouseEnter={(e) => {e.currentTarget.style.borderColor = T.accent;e.currentTarget.style.color = T.accent;e.currentTarget.style.background = T.accentBg;}} onMouseLeave={(e) => {e.currentTarget.style.borderColor = T.border;e.currentTarget.style.color = T.textMid;e.currentTarget.style.background = T.surfaceAlt;}}>
+                        {p}
+                      </button>
+                )}
+                  </div>
+                </div>
+                {aiPanel &&
+            <div style={{ padding: "14px 16px", flex: 1, overflow: "auto" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: T.accent, display: "flex", alignItems: "center", gap: 5 }}>
+                        {aiLoading && <Spinner size={12} />}
+                        {aiLoading ? "Generating…" : "AI Response"}
+                      </div>
+                      <div onClick={() => setAiPanel(false)} style={{ cursor: "pointer", color: T.textMuted }}><Icon d={Ic.x} size={13} /></div>
+                    </div>
+                    {aiResult &&
+              <>
+                        <div style={{ fontSize: 12.5, color: T.textMid, lineHeight: 1.7, marginBottom: 12 }}>{aiResult}{aiLoading && <span style={{ animation: "pulse 1s infinite", color: T.accent }}>|</span>}</div>
+                        {!aiLoading &&
+                <div style={{ display: "flex", gap: 6 }}>
+                            <button onClick={() => {setBlocks((bs) => [...bs, { id: Date.now(), type: "p", text: aiResult }]);setAiPanel(false);}} style={{ flex: 1, padding: "7px 0", borderRadius: 7, border: "none", background: T.accent, color: "white", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>Insert</button>
+                            <button onClick={() => triggerAI(AI_PROMPTS[0])} style={{ flex: 1, padding: "7px 0", borderRadius: 7, border: `1px solid ${T.border}`, background: "none", color: T.textMid, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Retry</button>
+                          </div>
+                }
+                      </>
+              }
+                  </div>
+            }
+              </div>
+          }
+
+            {/* TOC tab */}
+            {sidebarTab === "toc" &&
+          <div style={{ flex: 1, overflow: "auto", padding: "12px 0" }}>
+                <div style={{ padding: "0 16px 8px", fontSize: 11, fontWeight: 700, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.08em" }}>Table of Contents</div>
+                {tocItems.length === 0 && <div style={{ padding: "12px 16px", fontSize: 13, color: T.textMuted }}>No headings yet. Add H1, H2, or H3 blocks.</div>}
+                {tocItems.map((b, i) =>
+            <div key={b.id} onClick={() => setFocused(b.id)} style={{
+              padding: b.type === "h1" ? "8px 16px" : b.type === "h2" ? "7px 24px" : "6px 32px",
+              fontSize: b.type === "h1" ? 13 : b.type === "h2" ? 12 : 11.5,
+              fontWeight: b.type === "h1" ? 700 : b.type === "h2" ? 600 : 500,
+              color: focused === b.id ? T.accent : T.text,
+              cursor: "pointer", borderLeft: focused === b.id ? `2px solid ${T.accent}` : "2px solid transparent",
+              background: focused === b.id ? T.accentBg : "transparent",
+              transition: "all 0.15s", lineHeight: 1.3,
+              display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden", height: "46px"
+            }} onMouseEnter={(e) => e.currentTarget.style.background = T.surfaceAlt} onMouseLeave={(e) => e.currentTarget.style.background = focused === b.id ? T.accentBg : "transparent"}>
+                    {b.text || <span style={{ color: T.textMuted, fontStyle: "italic" }}>Untitled</span>}
+                  </div>
+            )}
+              </div>
+          }
+
+            {/* Info tab */}
+            {sidebarTab === "info" &&
+          <div style={{ flex: 1, overflow: "auto", padding: "14px 16px" }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Document Info</div>
+                {[
+            { label: "Status", value: "In Progress", badge: true },
+            { label: "Progress", value: "86%" },
+            { label: "Owner", value: "Murilo Muniz" },
+            { label: "Workspace", value: "Alpha Product v.0" },
+            { label: "Created", value: "Oct 14, 2025" },
+            { label: "Words", value: wordCount },
+            { label: "Blocks", value: blocks.length }].
+            map(({ label, value, badge }) =>
+            <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: `1px solid ${T.border}` }}>
+                    <span style={{ fontSize: 11.5, color: T.textMuted, fontWeight: 500 }}>{label}</span>
+                    {badge ?
+              <span style={{ background: T.accentBg, color: T.accent, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, border: `1px solid ${T.accentBorder}` }}>{value}</span> :
+              <span style={{ fontSize: 11.5, color: T.text, fontWeight: 600 }}>{value}</span>}
+                  </div>
+            )}
+                <div style={{ marginTop: 14 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Progress</div>
+                  <div style={{ height: 6, background: T.border, borderRadius: 3, overflow: "hidden" }}>
+                    <div style={{ width: "86%", height: "100%", background: `linear-gradient(90deg,${T.accent},#a855f7)`, borderRadius: 3, transition: "width 0.4s ease" }} />
+                  </div>
+                  <div style={{ fontSize: 11, color: T.textMuted, marginTop: 5 }}>86% complete</div>
+                </div>
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Collaborators</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {TEAM_MEMBERS.slice(0, 3).map((m) =>
+                <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ width: 26, height: 26, borderRadius: "50%", background: m.color, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 9, fontWeight: 700, flexShrink: 0 }}>{m.initials}</div>
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: T.text }}>{m.name}</div>
+                          <div style={{ fontSize: 10, color: T.textMuted }}>{m.role}</div>
+                        </div>
+                      </div>
+                )}
+                  </div>
+                </div>
+              </div>
+          }
+          </div>
+        }
+      </div>
+
+      {/* Notifications panel */}
+      {showNotifs && <NotificationsPanel theme={T} onClose={() => setShowNotifs(false)} />}
+    </div>);
+
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SETTINGS SCREEN
+// ─────────────────────────────────────────────────────────────────────────────
+const SETTINGS_NAV = [
+{ id: "profile", label: "Profile", icon: Ic.user },
+{ id: "ai", label: "AI & Models", icon: Ic.cpu },
+{ id: "workspace", label: "Workspace", icon: Ic.folder },
+{ id: "members", label: "Members", icon: Ic.users },
+{ id: "security", label: "Security", icon: Ic.lock }];
+
+
+const AVAILABLE_MODELS = [
+{ id: "llama3.2:3b", size: "2.0 GB", installed: true, active: true, speed: "Fast" },
+{ id: "llama3.1:8b", size: "4.7 GB", installed: true, active: false, speed: "Medium" },
+{ id: "mistral:7b", size: "4.1 GB", installed: false, active: false, speed: "Medium" },
+{ id: "qwen2.5:7b", size: "4.4 GB", installed: false, active: false, speed: "Medium" },
+{ id: "gemma3:4b", size: "3.3 GB", installed: false, active: false, speed: "Fast" },
+{ id: "phi4-mini:3.8b", size: "2.5 GB", installed: false, active: false, speed: "Fast" }];
+
+
+const ToggleSwitch = ({ on, onChange, color = "#7c3aed" }) =>
+<div onClick={onChange} style={{ width: 40, height: 22, borderRadius: 11, background: on ? color : "#d1d5db", cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
+    <div style={{ position: "absolute", top: 2, left: on ? 20 : 2, width: 18, height: 18, borderRadius: "50%", background: "white", boxShadow: "0 1px 4px rgba(0,0,0,0.2)", transition: "left 0.2s" }} />
+  </div>;
+
+
+const SettingsScreen = ({ onBack, darkMode = false, profile }) => {
+  const T = darkMode ? DARK : LIGHT;
+  const [section, setSection] = useState("ai");
+  const [models, setModels] = useState(AVAILABLE_MODELS);
+  const [ollamaUrl, setOllamaUrl] = useState("http://localhost:11434");
+  const [ollamaStatus, setOllamaStatus] = useState("connected"); // connected | checking | error
+  const [pullingModel, setPullingModel] = useState(null);
+  const [temp, setTemp] = useState(0.7);
+  const [maxTokens, setMaxTokens] = useState(2048);
+  const [contextWindow, setContextWindow] = useState(8192);
+  const [privacyToggles, setPrivacyToggles] = useState({ telemetry: false, crashReports: false, analytics: false, localOnly: true });
+  const [wsName, setWsName] = useState("Alpha Product v.0");
+  const [wsDesc, setWsDesc] = useState("Main product development workspace");
+
+  const firstName = profile?.profile?.firstName || "Murilo";
+  const lastName = profile?.profile?.lastName || "Muniz";
+  const role = profile?.profile?.role || "Developer";
+  const [avatarColor, setAvatarColor] = useState(profile?.profile?.avatarColor || "#7c3aed");
+  const [profileName, setProfileName] = useState({ first: firstName, last: lastName });
+  const [profileRole, setProfileRole] = useState(role);
+
+  const recheck = () => {
+    setOllamaStatus("checking");
+    setTimeout(() => setOllamaStatus("connected"), 1400);
+  };
+
+  const pullModel = (modelId) => {
+    setPullingModel(modelId);
+    setTimeout(() => {
+      setModels((ms) => ms.map((m) => m.id === modelId ? { ...m, installed: true } : m));
+      setPullingModel(null);
+    }, 2800);
+  };
+
+  const setActive = (modelId) => setModels((ms) => ms.map((m) => ({ ...m, active: m.id === modelId })));
+  const deleteModel = (modelId) => setModels((ms) => ms.map((m) => m.id === modelId ? { ...m, installed: false, active: false } : m));
+
+  const activeModel = models.find((m) => m.active);
+
+  return (
+    <div style={{ width: "100%", height: "100%", display: "flex", background: T.bg, transition: "background 0.3s" }}>
+      {/* Left nav */}
+      <div style={{ width: 220, flexShrink: 0, borderRight: `1px solid ${T.border}`, background: T.surface, display: "flex", flexDirection: "column", transition: "background 0.3s" }}>
+        {/* Header */}
+        <div style={{ padding: "16px 16px 12px", borderBottom: `1px solid ${T.border}` }}>
+          <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: `1px solid ${T.border}`, borderRadius: 7, padding: "5px 10px", fontSize: 12, fontWeight: 600, color: T.textMid, cursor: "pointer", marginBottom: 14, transition: "all 0.15s" }} onMouseEnter={(e) => {e.currentTarget.style.borderColor = T.accent;e.currentTarget.style.color = T.accent;}} onMouseLeave={(e) => {e.currentTarget.style.borderColor = T.border;e.currentTarget.style.color = T.textMid;}}>
+            <Icon d={Ic.arrowL} size={13} /> Back
+          </button>
+          <div style={{ fontSize: 16, fontWeight: 800, color: T.text }}>Settings</div>
+        </div>
+
+        {/* Nav items */}
+        <div style={{ padding: "10px 10px", flex: 1 }}>
+          {SETTINGS_NAV.map((item) =>
+          <div key={item.id} onClick={() => setSection(item.id)} style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 11px", borderRadius: 8, cursor: "pointer", background: section === item.id ? T.accentBg : "transparent", color: section === item.id ? T.accent : T.textMid, marginBottom: 2, transition: "all 0.15s" }} onMouseEnter={(e) => {if (section !== item.id) e.currentTarget.style.background = T.surfaceAlt;}} onMouseLeave={(e) => {if (section !== item.id) e.currentTarget.style.background = "transparent";}}>
+              <Icon d={item.icon} size={15} color={section === item.id ? T.accent : T.textMid} />
+              <span style={{ fontSize: 13, fontWeight: section === item.id ? 600 : 500 }}>{item.label}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Ollama status pill */}
+        <div style={{ padding: "12px 16px", borderTop: `1px solid ${T.border}` }}>
+          <div style={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: 9, padding: "10px 12px" }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Ollama</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: ollamaStatus === "connected" ? "#10b981" : ollamaStatus === "checking" ? "#f59e0b" : "#ef4444", flexShrink: 0, animation: ollamaStatus === "checking" ? "pulse 0.8s infinite" : "none" }} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: T.text, flex: 1 }}>{ollamaStatus === "connected" ? "Running" : ollamaStatus === "checking" ? "Checking…" : "Offline"}</span>
+            </div>
+            {activeModel && <div style={{ fontSize: 10, color: T.textMuted, marginTop: 4 }}>{activeModel.id}</div>}
+          </div>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "32px 40px", minWidth: 0 }}>
+
+        {/* ── PROFILE ── */}
+        {section === "profile" &&
+        <div style={{ maxWidth: 560, animation: "fadeUp 0.3s ease" }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: T.text, marginBottom: 4 }}>Profile</div>
+            <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 28 }}>Your personal information and preferences</div>
+
+            {/* Avatar */}
+            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 28, padding: "20px", background: T.surface, borderRadius: 14, border: `1px solid ${T.border}` }}>
+              <div style={{ width: 60, height: 60, borderRadius: "50%", background: avatarColor, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 22, fontWeight: 800, flexShrink: 0 }}>
+                {profileName.first.charAt(0)}{profileName.last.charAt(0)}
+              </div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: T.text, marginBottom: 2 }}>{profileName.first} {profileName.last}</div>
+                <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>{profileRole} · muglabs.co</div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {["#7c3aed", "#ec4899", "#3b82f6", "#10b981", "#f59e0b", "#ef4444"].map((c) =>
+                <div key={c} onClick={() => setAvatarColor(c)} style={{ width: 20, height: 20, borderRadius: "50%", background: c, cursor: "pointer", border: avatarColor === c ? "2.5px solid #111" : "2.5px solid transparent", transition: "border 0.15s", transform: avatarColor === c ? "scale(1.2)" : "scale(1)" }} />
+                )}
+                </div>
+              </div>
+            </div>
+
+            {/* Fields */}
+            {[
+          { label: "First name", val: profileName.first, set: (v) => setProfileName((n) => ({ ...n, first: v })) },
+          { label: "Last name", val: profileName.last, set: (v) => setProfileName((n) => ({ ...n, last: v })) }].
+          map((f) =>
+          <div key={f.label} style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: T.textMid, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{f.label}</label>
+                <input value={f.val} onChange={(e) => f.set(e.target.value)} style={{ width: "100%", padding: "10px 13px", border: `1.5px solid ${T.border}`, borderRadius: 9, fontSize: 14, outline: "none", color: T.text, background: T.inputBg, transition: "border-color 0.2s" }} onFocus={(e) => e.target.style.borderColor = T.accent} onBlur={(e) => e.target.style.borderColor = T.border} />
+              </div>
+          )}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: T.textMid, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Role</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                {ROLES.map((r) =>
+              <button key={r} onClick={() => setProfileRole(r)} style={{ padding: "6px 14px", borderRadius: 20, fontSize: 12, fontWeight: 500, border: profileRole === r ? `1.5px solid ${T.accent}` : `1.5px solid ${T.border}`, background: profileRole === r ? T.accentBg : T.surfaceAlt, color: profileRole === r ? T.accent : T.textMid, cursor: "pointer", transition: "all 0.15s" }}>{r}</button>
+              )}
+              </div>
+            </div>
+            <button style={{ background: T.accent, color: "white", border: "none", borderRadius: 9, padding: "10px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer", marginTop: 8, boxShadow: `0 2px 8px rgba(124,58,237,0.25)` }}>Save changes</button>
+          </div>
+        }
+
+        {/* ── AI & MODELS ── */}
+        {section === "ai" &&
+        <div style={{ maxWidth: 620, animation: "fadeUp 0.3s ease" }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: T.text, marginBottom: 4 }}>AI & Models</div>
+            <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 28 }}>Local model configuration — zero data leaves your device</div>
+
+            {/* Connection */}
+            <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 14, padding: "20px", marginBottom: 20 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: T.text, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
+                <Icon d={Ic.wifi} size={16} color={T.accent} /> Ollama Connection
+              </div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
+                <input value={ollamaUrl} onChange={(e) => setOllamaUrl(e.target.value)} style={{ flex: 1, padding: "9px 12px", border: `1.5px solid ${ollamaStatus === "connected" ? "#10b981" : ollamaStatus === "error" ? "#ef4444" : T.border}`, borderRadius: 9, fontSize: 13, fontFamily: "monospace", outline: "none", color: T.text, background: T.inputBg, transition: "border-color 0.2s" }} />
+                <button onClick={recheck} style={{ padding: "9px 16px", borderRadius: 9, border: "none", background: T.accent, color: "white", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
+                  {ollamaStatus === "checking" ? <><Spinner size={13} color="white" />Checking</> : "Re-check"}
+                </button>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: ollamaStatus === "connected" ? "#f0fdf4" : ollamaStatus === "checking" ? "#fffbeb" : "#fef2f2", borderRadius: 9, border: `1px solid ${ollamaStatus === "connected" ? "#bbf7d0" : ollamaStatus === "checking" ? "#fde68a" : "#fecaca"}` }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: ollamaStatus === "connected" ? "#10b981" : ollamaStatus === "checking" ? "#f59e0b" : "#ef4444", flexShrink: 0, animation: ollamaStatus === "checking" ? "pulse 0.8s infinite" : "none" }} />
+                <span style={{ fontSize: 12, fontWeight: 600, color: ollamaStatus === "connected" ? "#065f46" : ollamaStatus === "checking" ? "#92400e" : "#991b1b" }}>
+                  {ollamaStatus === "connected" ? "Ollama is running · localhost:11434" : ollamaStatus === "checking" ? "Connecting to Ollama…" : "Could not connect. Is Ollama running?"}
+                </span>
+              </div>
+            </div>
+
+            {/* Model parameters */}
+            <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 14, padding: "20px", marginBottom: 20 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: T.text, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                <Icon d={Ic.sliders} size={16} color={T.accent} /> Model Parameters
+              </div>
+              {[
+            { label: "Temperature", val: temp, set: setTemp, min: 0, max: 2, step: 0.1, hint: "Higher = more creative, lower = more precise" },
+            { label: "Max Tokens", val: maxTokens, set: setMaxTokens, min: 256, max: 8192, step: 256, hint: "Maximum tokens in each response" },
+            { label: "Context Window", val: contextWindow, set: setContextWindow, min: 2048, max: 32768, step: 2048, hint: "Token window for document context" }].
+            map((param) =>
+            <div key={param.label} style={{ marginBottom: 18 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: T.textMid, textTransform: "uppercase", letterSpacing: "0.06em" }}>{param.label}</label>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: T.accent }}>{param.val}</span>
+                  </div>
+                  <input type="range" min={param.min} max={param.max} step={param.step} value={param.val} onChange={(e) => param.set(Number(e.target.value))} style={{ width: "100%", accentColor: T.accent, cursor: "pointer" }} />
+                  <div style={{ fontSize: 11, color: T.textMuted, marginTop: 3 }}>{param.hint}</div>
+                </div>
+            )}
+            </div>
+
+            {/* Model library */}
+            <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 14, padding: "20px" }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: T.text, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                <Icon d={Ic.cpu} size={16} color={T.accent} /> Model Library
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {models.map((m) =>
+              <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", border: `1.5px solid ${m.active ? T.accent : T.border}`, borderRadius: 10, background: m.active ? T.accentBg : T.surfaceAlt, transition: "all 0.15s" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: T.text, fontFamily: "monospace" }}>{m.id}</span>
+                        {m.active && <span style={{ background: T.accent, color: "white", fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>Active</span>}
+                      </div>
+                      <div style={{ display: "flex", gap: 10 }}>
+                        <span style={{ fontSize: 11, color: T.textMuted }}>{m.size}</span>
+                        <span style={{ fontSize: 11, color: m.speed === "Fast" ? "#10b981" : "#f59e0b", fontWeight: 600 }}>{m.speed}</span>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                      {m.installed && !m.active && <button onClick={() => setActive(m.id)} style={{ padding: "5px 12px", borderRadius: 7, border: `1px solid ${T.accent}`, background: "none", color: T.accent, fontSize: 11, fontWeight: 600, cursor: "pointer", transition: "all 0.15s" }} onMouseEnter={(e) => {e.currentTarget.style.background = T.accentBg;}} onMouseLeave={(e) => {e.currentTarget.style.background = "none";}}>Set active</button>}
+                      {m.installed && <button onClick={() => deleteModel(m.id)} style={{ padding: "5px 12px", borderRadius: 7, border: `1px solid ${T.border}`, background: "none", color: "#ef4444", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Remove</button>}
+                      {!m.installed &&
+                  <button onClick={() => pullModel(m.id)} disabled={!!pullingModel} style={{ padding: "5px 12px", borderRadius: 7, border: "none", background: pullingModel === m.id ? T.border : T.accent, color: pullingModel === m.id ? T.textMuted : "white", fontSize: 11, fontWeight: 600, cursor: pullingModel ? 'default' : 'pointer', display: "flex", alignItems: "center", gap: 5, transition: "all 0.2s" }}>
+                          {pullingModel === m.id ? <><Spinner size={11} color="white" />Pulling…</> : <><Icon d={Ic.plus} size={11} color="white" />Pull</>}
+                        </button>
+                  }
+                    </div>
+                  </div>
+              )}
+              </div>
+            </div>
+          </div>
+        }
+
+        {/* ── WORKSPACE ── */}
+        {section === "workspace" &&
+        <div style={{ maxWidth: 560, animation: "fadeUp 0.3s ease" }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: T.text, marginBottom: 4 }}>Workspace</div>
+            <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 28 }}>Configure your team workspace settings</div>
+
+            <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 14, padding: "20px", marginBottom: 20 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 16 }}>General</div>
+              {[
+            { label: "Workspace name", val: wsName, set: setWsName },
+            { label: "Description", val: wsDesc, set: setWsDesc }].
+            map((f) =>
+            <div key={f.label} style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: T.textMid, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{f.label}</label>
+                  <input value={f.val} onChange={(e) => f.set(e.target.value)} style={{ width: "100%", padding: "10px 13px", border: `1.5px solid ${T.border}`, borderRadius: 9, fontSize: 14, outline: "none", color: T.text, background: T.inputBg }} onFocus={(e) => e.target.style.borderColor = T.accent} onBlur={(e) => e.target.style.borderColor = T.border} />
+                </div>
+            )}
+              <button style={{ background: T.accent, color: "white", border: "none", borderRadius: 9, padding: "9px 22px", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: `0 2px 8px rgba(124,58,237,0.25)` }}>Save</button>
+            </div>
+
+            <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 14, padding: "20px", marginBottom: 20 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 14 }}>Document defaults</div>
+              {[{ label: "Auto-save", desc: "Save documents automatically every 30s", on: true }, { label: "Version history", desc: "Keep 30 days of document snapshots", on: true }, { label: "AI suggestions", desc: "Show inline AI suggestions while typing", on: false }].map((s) =>
+            <div key={s.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${T.border}` }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{s.label}</div>
+                    <div style={{ fontSize: 11, color: T.textMuted }}>{s.desc}</div>
+                  </div>
+                  <ToggleSwitch on={s.on} onChange={() => {}} color={T.accent} />
+                </div>
+            )}
+            </div>
+
+            <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 14, padding: "20px" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#991b1b", marginBottom: 8 }}>Danger Zone</div>
+              <div style={{ fontSize: 12, color: "#7f1d1d", marginBottom: 14 }}>Deleting a workspace is permanent and cannot be undone. All documents will be removed.</div>
+              <button style={{ background: "none", border: "1.5px solid #ef4444", borderRadius: 9, padding: "8px 18px", fontSize: 13, fontWeight: 600, color: "#ef4444", cursor: "pointer" }}>Delete workspace</button>
+            </div>
+          </div>
+        }
+
+        {/* ── MEMBERS ── */}
+        {section === "members" &&
+        <div style={{ maxWidth: 600, animation: "fadeUp 0.3s ease" }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: T.text, marginBottom: 4 }}>Members</div>
+            <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 28 }}>Manage who has access to your workspace</div>
+
+            <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 14, padding: "20px", marginBottom: 20 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: T.text }}>Team members <span style={{ fontSize: 12, color: T.textMuted, fontWeight: 400 }}>({TEAM_MEMBERS.length})</span></div>
+                <button style={{ background: T.accent, color: "white", border: "none", borderRadius: 8, padding: "7px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}><Icon d={Ic.plus} size={12} color="white" />Invite</button>
+              </div>
+              {TEAM_MEMBERS.map((m, i) =>
+            <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < TEAM_MEMBERS.length - 1 ? `1px solid ${T.border}` : "none" }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: m.color, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{m.initials}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{m.name} {m.id === "murilo" && <span style={{ fontSize: 10, color: T.accent, fontWeight: 700 }}>(you)</span>}</div>
+                    <div style={{ fontSize: 11, color: T.textMuted }}>{m.role}</div>
+                  </div>
+                  <select defaultValue={m.id === "murilo" ? "owner" : "editor"} style={{ padding: "5px 10px", borderRadius: 7, border: `1px solid ${T.border}`, fontSize: 12, fontWeight: 600, color: T.text, background: T.inputBg, cursor: "pointer", outline: "none" }}>
+                    <option value="owner">Owner</option>
+                    <option value="admin">Admin</option>
+                    <option value="editor">Editor</option>
+                    <option value="viewer">Viewer</option>
+                  </select>
+                </div>
+            )}
+            </div>
+          </div>
+        }
+
+        {/* ── SECURITY ── */}
+        {section === "security" &&
+        <div style={{ maxWidth: 560, animation: "fadeUp 0.3s ease" }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: T.text, marginBottom: 4 }}>Security & Privacy</div>
+            <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 28 }}>Data policies and local-only guarantees</div>
+
+            <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 14, padding: "16px 20px", marginBottom: 20, display: "flex", gap: 12, alignItems: "flex-start" }}>
+              <Icon d={Ic.lock} size={18} color="#10b981" />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#065f46", marginBottom: 3 }}>Local-only processing</div>
+                <div style={{ fontSize: 12, color: "#047857", lineHeight: 1.5 }}>All AI inference runs on your local Ollama server. No document content, prompts, or completions are sent to external servers.</div>
+              </div>
+            </div>
+
+            <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 14, padding: "20px", marginBottom: 20 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 14 }}>Privacy controls</div>
+              {[
+            { key: "localOnly", label: "Local-only mode", desc: "Block any outbound network requests from AI features" },
+            { key: "telemetry", label: "Usage telemetry", desc: "Send anonymous feature usage to help improve Writeopia" },
+            { key: "crashReports", label: "Crash reports", desc: "Automatically submit crash diagnostics" },
+            { key: "analytics", label: "Product analytics", desc: "Allow in-app analytics for UX improvements" }].
+            map((s) =>
+            <div key={s.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 0", borderBottom: `1px solid ${T.border}` }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{s.label}</div>
+                    <div style={{ fontSize: 11, color: T.textMuted }}>{s.desc}</div>
+                  </div>
+                  <ToggleSwitch on={privacyToggles[s.key]} onChange={() => setPrivacyToggles((p) => ({ ...p, [s.key]: !p[s.key] }))} color={T.accent} />
+                </div>
+            )}
+            </div>
+
+            <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 14, padding: "20px" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 14 }}>Audit Log</div>
+              {[
+            { action: "Model pulled", who: "Murilo Muniz", when: "Today 14:32", detail: "llama3.2:3b" },
+            { action: "Settings changed", who: "Murilo Muniz", when: "Today 10:15", detail: "Temperature → 0.7" },
+            { action: "Member invited", who: "Ana Costa", when: "Yesterday", detail: "rafael@muglabs.co" },
+            { action: "Workspace created", who: "Murilo Muniz", when: "Oct 14, 2025", detail: "Alpha Product v.0" }].
+            map((e, i) =>
+            <div key={i} style={{ display: "flex", gap: 12, padding: "8px 0", borderBottom: i < 3 ? `1px solid ${T.border}` : "none" }}>
+                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: T.accent, marginTop: 5, flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: T.text }}>{e.action} <span style={{ color: T.textMuted, fontWeight: 400 }}>· {e.detail}</span></div>
+                    <div style={{ fontSize: 11, color: T.textMuted }}>{e.who} · {e.when}</div>
+                  </div>
+                </div>
+            )}
+            </div>
+          </div>
+        }
+      </div>
+    </div>);
+
+};
+const App = () => {
+  const [screen, setScreen] = useState("onboarding");
+  const [profileData, setProfileData] = useState(null);
+  const [openDoc, setOpenDoc] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
+
+  const handleOnboardingComplete = (data) => {
+    setProfileData(data);
+    setScreen("home");
+  };
+
+  return (
+    <div style={{ width: "100vw", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0e0f14" }}>
+      <div style={{ width: "min(1300px,99vw)", height: "min(840px,98vh)", borderRadius: 12, overflow: "hidden", boxShadow: "0 32px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06)", display: "flex", flexDirection: "column" }}>
+        {/* Title bar */}
+        <div style={{ height: 36, background: "#1c1c1e", display: "flex", alignItems: "center", padding: "0 14px", gap: 8, flexShrink: 0 }}>
+          {["#ff5f57", "#ffbd2e", "#28c840"].map((c, i) => <div key={i} style={{ width: 12, height: 12, borderRadius: "50%", background: c }} />)}
+          <div style={{ flex: 1, textAlign: "center", fontSize: 12, color: "rgba(255,255,255,0.35)", fontWeight: 500 }}>
+            Writeopia Beta{openDoc ? ` — ${openDoc.title?.slice(0, 40)}…` : screen === "settings" ? " — Settings" : ""}
+          </div>
+          <div style={{ width: 44 }} />
+        </div>
+
+        <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
+          {screen === "onboarding" &&
+          <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg,#faf8ff 0%,#f0ebff 50%,#faf8ff 100%)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+              <div style={{ position: "absolute", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle,rgba(124,58,237,0.08) 0%,transparent 70%)", top: -100, right: -100, pointerEvents: "none" }} />
+              <div style={{ position: "absolute", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle,rgba(168,85,247,0.07) 0%,transparent 70%)", bottom: -80, left: -80, pointerEvents: "none" }} />
+              <Onboarding onComplete={handleOnboardingComplete} />
+            </div>
+          }
+          {screen === "home" && !openDoc &&
+          <HomeScreen profile={profileData} onOpenDoc={(doc) => setOpenDoc(doc)} onOpenSettings={() => setScreen("settings")} darkMode={darkMode} />
+          }
+          {screen === "home" && openDoc &&
+          <EditorScreen doc={openDoc} onBack={() => setOpenDoc(null)} darkMode={darkMode} />
+          }
+          {screen === "settings" &&
+          <SettingsScreen onBack={() => setScreen("home")} darkMode={darkMode} profile={profileData} />
+          }
+        </div>
+      </div>
+    </div>);
+
+};
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
